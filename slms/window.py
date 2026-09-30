@@ -33,6 +33,7 @@ from .local import LocalStore
 from .sync import SyncWorker
 from .mapview import MapView
 from .setup import login
+from .theme import STYLE, brand_header
 
 
 STATES = {
@@ -58,25 +59,6 @@ ACTIONS = {
     "admin.create": "Crear cuenta",
     "admin.update": "Actualizar cuenta",
 }
-STYLE = """
-QMainWindow, QDialog { background:#f3f6fa; color:#172c45; }
-QWidget { font-family:"Segoe UI"; font-size:13px; }
-QLabel#title { font-size:26px; font-weight:700; }
-QLabel#subtitle { color:#5e7187; }
-QLabel#metric { background:white; border:1px solid #dce5ee; border-radius:10px; padding:20px; font-size:23px; font-weight:600; }
-QListWidget#nav { background:#132942; color:#ccdae8; border:0; border-radius:10px; padding:12px; font-size:15px; }
-QListWidget#nav::item { padding:15px 9px; border-radius:6px; }
-QListWidget#nav::item:selected { background:#126d7a; color:white; }
-QPushButton { background:#087f8c; color:white; border:0; border-radius:6px; padding:9px 15px; font-weight:600; }
-QPushButton:hover { background:#096873; }
-QPushButton:disabled { background:#ccd5df; color:#607086; }
-QPushButton:checked { background:#b65b10; }
-QLineEdit,QComboBox,QSpinBox,QDoubleSpinBox,QTextEdit { background:white; color:#172c45; border:1px solid #cbd7e3; padding:7px; border-radius:5px; }
-QTableWidget { background:white; alternate-background-color:#f5f8fb; border:1px solid #dce5ee; gridline-color:#edf1f5; selection-background-color:#d9eef1; selection-color:#132942; }
-QHeaderView::section { background:#e8eff5; color:#39526b; padding:9px; border:0; font-weight:600; }
-QTabWidget::pane { background:white; }
-QStatusBar { color:#51667e; }
-"""
 
 
 def local_date(value):
@@ -125,23 +107,25 @@ class Window(QMainWindow):
         root = QWidget()
         self.setCentralWidget(root)
         outer = QVBoxLayout(root)
-        outer.setContentsMargins(24, 20, 24, 12)
-        top = QHBoxLayout()
-        title = QLabel("SAMTEC  /  LOCKERS")
-        title.setObjectName("title")
-        top.addWidget(title)
-        top.addStretch()
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        header, top = brand_header(root)
         self.identity = QLabel()
         top.addWidget(self.identity)
         self.button(top, "Iniciar sesión", self.relogin)
         self.button(top, "Salir de la cuenta", self.logout)
-        outer.addLayout(top)
+        outer.addWidget(header)
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(24, 20, 24, 16)
+        content_layout.setSpacing(20)
+        outer.addWidget(content, 1)
         self.banner = QLabel("Conectando al servidor…")
         self.banner.setWordWrap(True)
-        self.banner.setStyleSheet("padding:10px; background:#e7eff7; border-radius:6px;")
-        outer.addWidget(self.banner)
+        self.banner.setObjectName("banner")
+        content_layout.addWidget(self.banner)
         body = QHBoxLayout()
-        outer.addLayout(body, 1)
+        content_layout.addLayout(body, 1)
         self.nav = QListWidget()
         self.nav.setObjectName("nav")
         self.nav.setFixedWidth(205)
@@ -182,6 +166,8 @@ class Window(QMainWindow):
 
     def button(self, layout, label, callback):
         b = QPushButton(label)
+        if label.startswith(("Guardar", "Asignar", "Nuevo", "Crear", "Ver disponibles", "Registrar")):
+            b.setProperty("primary", True)
         b.clicked.connect(callback)
         layout.addWidget(b)
         return b
@@ -344,7 +330,7 @@ class Window(QMainWindow):
         self.map.blockOpened.connect(self.open_block)
         layout.addWidget(self.map, 1)
         legend = QLabel(
-            "Turquesa: bloque con disponibilidad · Gris: sin disponibles · Rojo: contorno editable · Norte según el levantamiento físico"
+            "Verde: bloque con disponibilidad · Gris: sin disponibles · Rojo: contorno editable · Norte según el levantamiento físico"
         )
         legend.setWordWrap(True)
         layout.addWidget(legend)
@@ -525,11 +511,11 @@ class Window(QMainWindow):
             button = QPushButton(locker["number"] + "\n" + STATES[state])
             button.setMinimumSize(145, 70)
             color = {
-                "ocupado": "#44546b",
+                "ocupado": "#444444",
                 "pendiente": "#997329",
                 "mantenimiento": "#a24b36",
                 "retirado": "#6b7280",
-                "utilizable": "#087f8c",
+                "utilizable": "#26724f",
             }[state]
             button.setStyleSheet(f"background:{color};color:white;")
             button.clicked.connect(

@@ -33,3 +33,12 @@ Las pruebas utilizaron información ficticia. No se conectaron mediante credenci
 La dependencia Starlette emite una advertencia de deprecación sobre su cliente HTTP de pruebas; no afecta estos resultados. Las versiones quedan fijadas en requirements.txt.
 
 La distribución inicial tuvo una incompatibilidad de DLL detectada durante la prueba. Se corrigió excluyendo del entorno de empaquetado bibliotecas ajenas procedentes del runtime de herramientas. Se reconstruyó y se volvió a verificar el ejecutable corregido.
+
+## Actualización visual 1.1 · 30 de septiembre de 2026
+
+- Tema compartido inspirado en samtec.com, con fuente y logotipo incluidos localmente.
+- Paleta explícita para evitar texto blanco sobre fondos claros cuando Windows usa modo oscuro.
+- Secciones de conexión y cuenta en el asistente; desplazamiento vertical en pantallas pequeñas.
+- Revisión visual del asistente, acceso, resumen, mapa e inventario.
+- Prueba de regresión con paleta oscura y cambio entre los tres tipos de conexión.
+- Las 21 pruebas de la suite local pasan. Las 20 pruebas de PostgreSQL de la versión inicial se conservan; esta actualización no cambia el esquema ni la lógica de asignaciones.

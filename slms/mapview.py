@@ -17,7 +17,7 @@ class BlockItem(QGraphicsRectItem):
         super().__init__(0, 0, 64, 32)
         self.data = block
         self.callback, self.changed = callback, changed
-        self.setBrush(QColor("#087f8c" if available else "#44546b"))
+        self.setBrush(QColor("#26724f" if available else "#444444"))
         self.setPen(QPen(QColor("#ffffff"), 1.5))
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.setPos(block["x"], block["y"])
@@ -75,7 +75,7 @@ class MapView(QGraphicsView):
 
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.setBackgroundBrush(QColor("#e9eef3"))
+        self.setBackgroundBrush(QColor("#eeeeee"))
         self.editing = False
         self.dirty = {}
         self.shapes = []

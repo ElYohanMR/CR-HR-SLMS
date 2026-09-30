@@ -11,26 +11,28 @@ from .database import engine_for, initialize
 from .forms import Form
 
 
-def setup(parent=None):
+def setup_form(parent=None):
     form = Form(
         "Bienvenido a Samtec Lockers",
         [
             (
                 "mode",
-                "Modo",
+                "Tipo de conexión",
                 [
                     ("Servidor local · PostgreSQL", "postgres"),
                     ("Conectar a servidor de TI", "remote"),
                     ("Demostración · datos ficticios", "demo"),
                 ],
             ),
-            ("host", "Host PostgreSQL", "line"),
-            ("port", "Puerto PostgreSQL", "line"),
-            ("database", "Base PostgreSQL", "line"),
-            ("db_user", "Usuario PostgreSQL", "line"),
-            ("db_password", "Contraseña PostgreSQL", "password"),
+            ("connection_section", "CONEXIÓN A POSTGRESQL", "section"),
+            ("host", "Servidor", "line"),
+            ("port", "Puerto", "line"),
+            ("database", "Base de datos", "line"),
+            ("db_user", "Usuario de la base de datos", "line"),
+            ("db_password", "Contraseña de la base de datos", "password"),
             ("url", "Dirección del servidor de TI", "line"),
-            ("username", "Usuario administrador inicial", "line"),
+            ("account_section", "CUENTA ADMINISTRADORA INICIAL", "section"),
+            ("username", "Nombre de usuario", "line"),
             ("password", "Contraseña de la aplicación", "password"),
         ],
         {
@@ -42,20 +44,39 @@ def setup(parent=None):
             "username": "admin",
         },
         parent,
-        "Configura la conexión. La contraseña de PostgreSQL y la cuenta de la aplicación son independientes. Los secretos se guardan cifrados para tu usuario de Windows. La cuenta inicial requiere al menos 10 caracteres de contraseña.",
+        "Conecta la base de datos y crea tu cuenta para administrar los casilleros. Usa una contraseña propia para la aplicación, de al menos 10 caracteres. Las credenciales se guardan cifradas en esta computadora.",
     )
+    form.setMinimumWidth(740)
+    form.widgets["db_password"].setPlaceholderText("La contraseña que creaste en pgAdmin")
+    form.widgets["password"].setPlaceholderText("Nueva contraseña · mínimo 10 caracteres")
+    form.widgets["db_password"].setAccessibleDescription(
+        "Contraseña del usuario de PostgreSQL, independiente de la cuenta de Samtec Lockers"
+    )
+    form.widgets["password"].setAccessibleDescription(
+        "Contraseña nueva para la cuenta administradora de Samtec Lockers, mínimo 10 caracteres"
+    )
+    from PySide6.QtWidgets import QDialogButtonBox
+
+    form.findChild(QDialogButtonBox).button(QDialogButtonBox.StandardButton.Ok).setText("Configurar y continuar")
 
     def mode_changed():
         mode = form.widgets["mode"].currentData()
+        form.form_layout.setRowVisible(form.sections["connection_section"], mode == "postgres")
+        form.form_layout.setRowVisible(form.sections["account_section"], mode != "remote")
         for name in ("host", "port", "database", "db_user", "db_password"):
             form.form_layout.setRowVisible(form.widgets[name], mode == "postgres")
         form.form_layout.setRowVisible(form.widgets["url"], mode == "remote")
         for name in ("username", "password"):
             form.form_layout.setRowVisible(form.widgets[name], mode != "remote")
-        form.adjustSize()
+        form.resize(form.sizeHint().width(), min(form.sizeHint().height(), form.maximumHeight()))
 
     form.widgets["mode"].currentIndexChanged.connect(mode_changed)
     mode_changed()
+    return form
+
+
+def setup(parent=None):
+    form = setup_form(parent)
     while form.exec() == QDialog.DialogCode.Accepted:
         data = form.values()
         try:
@@ -170,6 +191,7 @@ def login(config, parent=None):
         [("username", "Usuario", "line"), ("password", "Contraseña", "password")],
         parent=parent,
         description="Utiliza tu cuenta individual de Samtec Lockers.",
+        accept_label="Entrar",
     )
     form.widgets["password"].returnPressed.connect(form.accept)
     while form.exec() == QDialog.DialogCode.Accepted:

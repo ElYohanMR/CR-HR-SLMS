@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import httpx
+from slms.config import save_private
 
 binary = Path(sys.argv[1]).resolve()
 profile = Path(tempfile.mkdtemp(prefix="slms-package-check-"))
@@ -16,7 +17,6 @@ flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 subprocess.run([str(binary), "--self-test"], env=env, check=True, timeout=40, creationflags=flags)
 assert (profile / "self-test.json").exists()
 os.environ["SLMS_HOME"] = str(profile)
-from slms.config import save_private
 
 with socket.socket() as sock:
     sock.bind(("127.0.0.1", 0))
@@ -50,6 +50,7 @@ try:
         assert len(snapshot["lockers"]) == 16
         assert len(snapshot["plans"]) == 1
         print("PASS: executable interface, encrypted configuration, server, authentication and inventory.")
+        print("Preview profile: " + str(profile))
 finally:
     process.terminate()
     process.wait(timeout=10)

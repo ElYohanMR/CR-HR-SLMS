@@ -14,6 +14,35 @@ from .window import Window
 def run(app):
     for font in ("segoeui.ttf", "segoeuib.ttf"):
         QFontDatabase.addApplicationFont("C:/Windows/Fonts/" + font)
+    # Reproduce a dark OS palette before applying the app's explicit light theme.
+    from PySide6.QtGui import QColor, QPalette
+    from .theme import apply_theme
+    from .setup import setup_form
+    from .forms import Form
+
+    dark = QPalette()
+    dark.setColor(QPalette.ColorRole.WindowText, QColor("white"))
+    dark.setColor(QPalette.ColorRole.Text, QColor("white"))
+    dark.setColor(QPalette.ColorRole.Window, QColor("#222222"))
+    app.setPalette(dark)
+    apply_theme(app)
+    wizard = setup_form()
+    wizard.setMaximumHeight(1000)
+    wizard.resize(740, wizard.sizeHint().height())
+    wizard.show()
+    QApplication.processEvents()
+    wizard.grab().save(str(home() / "configuracion.png"))
+    wizard.close()
+    signin = Form(
+        "Iniciar sesión",
+        [("username", "Usuario", "line"), ("password", "Contraseña", "password")],
+        description="Utiliza tu cuenta individual de Samtec Lockers.",
+        accept_label="Entrar",
+    )
+    signin.show()
+    QApplication.processEvents()
+    signin.grab().save(str(home() / "acceso.png"))
+    signin.close()
     engine = engine_for("sqlite:///" + (home() / "smoke.sqlite3").as_posix())
     initialize(engine, "preview", "Preview-only-password-42", demo=True)
     with TestClient(create_app(engine, demo=True)) as client:
@@ -40,6 +69,12 @@ def run(app):
     window.close()
     engine.dispose()
     (home() / "self-test.json").write_text(
-        json.dumps({"ok": True, "lockers": 16, "screenshots": ["resumen.png", "mapa.png", "inventario.png"]}),
+        json.dumps(
+            {
+                "ok": True,
+                "lockers": 16,
+                "screenshots": ["configuracion.png", "acceso.png", "resumen.png", "mapa.png", "inventario.png"],
+            }
+        ),
         encoding="utf-8",
     )

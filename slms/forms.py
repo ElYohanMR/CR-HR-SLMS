@@ -11,25 +11,62 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QLabel,
     QMessageBox,
+    QWidget,
+    QScrollArea,
+    QFrame,
+    QSizePolicy,
 )
+from PySide6.QtCore import Qt
+from .theme import brand_header
+
+
+class FormScroll(QScrollArea):
+    def sizeHint(self):
+        return self.widget().sizeHint()
 
 
 class Form(QDialog):
-    def __init__(self, title, fields, values=None, parent=None, description=""):
+    def __init__(self, title, fields, values=None, parent=None, description="", accept_label="Guardar"):
         super().__init__(parent)
         self.setWindowTitle(title)
-        self.setMinimumWidth(480)
+        self.setMinimumWidth(560)
+        self.setMaximumHeight(max(400, self.screen().availableGeometry().height() - 60))
         self.widgets = {}
+        self.sections = {}
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        header, _ = brand_header(self)
+        layout.addWidget(header)
+        content = QWidget()
+        body = QVBoxLayout(content)
+        body.setContentsMargins(28, 22, 28, 24)
+        body.setSpacing(14)
+        body.setAlignment(Qt.AlignmentFlag.AlignTop)
+        heading = QLabel(title)
+        heading.setObjectName("title")
+        body.addWidget(heading)
         if description:
             label = QLabel(description)
             label.setWordWrap(True)
-            layout.addWidget(label)
+            label.setObjectName("subtitle")
+            label.setMaximumWidth(650)
+            body.addWidget(label)
         form = QFormLayout()
+        form.setHorizontalSpacing(22)
+        form.setVerticalSpacing(12)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.form_layout = form
-        layout.addLayout(form)
+        body.addLayout(form)
         values = values or {}
         for key, label, kind in fields:
+            if kind == "section":
+                section = QLabel(label)
+                section.setObjectName("sectionTitle")
+                self.sections[key] = section
+                form.addRow(section)
+                continue
             value = values.get(key, "")
             if isinstance(kind, list):
                 widget = QComboBox()
@@ -39,7 +76,6 @@ class Form(QDialog):
                 if idx >= 0:
                     widget.setCurrentIndex(idx)
                 if key in ("employee_id", "locker_id"):
-                    from PySide6.QtCore import Qt
                     from PySide6.QtWidgets import QCompleter
 
                     widget.setEditable(True)
@@ -69,11 +105,25 @@ class Form(QDialog):
             self.widgets[key] = widget
             form.addRow(label, widget)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Guardar")
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(accept_label)
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setProperty("primary", True)
         buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        content.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        scroll = FormScroll()
+        scroll.setObjectName("formScroll")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
+        footer = QWidget()
+        footer_layout = QVBoxLayout(footer)
+        footer_layout.setContentsMargins(28, 14, 28, 20)
+        footer_layout.addWidget(buttons)
+        layout.addWidget(footer)
+        self.resize(self.sizeHint().width(), min(self.sizeHint().height(), self.maximumHeight()))
 
     def values(self):
         values = {}

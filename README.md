@@ -1,6 +1,8 @@
-# Samtec Lockers · 1.0
+# Samtec Lockers · 1.1
 
 Aplicación Windows con servicio central para recepción y Recursos Humanos.
+
+La versión 1.1 incorpora la identidad visual de referencia de Samtec: logo, tipografía Montserrat, encabezado gris y acentos naranjas. Corrige el contraste de los formularios en Windows con modo oscuro. El asistente separa la conexión de la cuenta administradora y permite desplazarse en pantallas pequeñas.
 
 ## Abrir
 

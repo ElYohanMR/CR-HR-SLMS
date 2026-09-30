@@ -32,13 +32,13 @@ def main():
         return
     from PySide6.QtWidgets import QApplication, QMessageBox
     from .setup import setup, ensure_server, login, ServerMismatch
-    from .window import Window, STYLE
+    from .window import Window
+    from .theme import apply_theme
 
     app = QApplication(sys.argv)
     app.setApplicationName("Samtec Lockers")
     app.setOrganizationName("Samtec Lockers")
-    app.setStyle("Fusion")
-    app.setStyleSheet(STYLE)
+    apply_theme(app)
     from PySide6.QtGui import QIcon
 
     app.setWindowIcon(QIcon(str(asset("lockers.svg"))))
