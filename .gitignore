@@ -1,0 +1,34 @@
+# Entornos y archivos generados por Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Configuración privada y datos locales
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+logs/
+backups/
+local-data/
+*.pem
+*.key
+
+# Archivos del sistema
+Thumbs.db
+Desktop.ini
+.DS_Store

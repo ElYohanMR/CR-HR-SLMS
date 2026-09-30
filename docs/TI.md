@@ -1,0 +1,55 @@
+# Despliegue y recuperación
+
+## Topología y requisitos
+
+Un servicio central FastAPI con PostgreSQL y de una a tres aplicaciones Windows conectadas por HTTPS. Los clientes no reciben credenciales de PostgreSQL. El servidor de esta entrega se ejecuta en Windows bajo la cuenta que configuró su secreto DPAPI.
+
+En desarrollo escucha en 127.0.0.1:8765. El lanzador lo inicia si hace falta y lo deja activo. No se modifican firewall ni puertos externos automáticamente.
+
+## Instalación corporativa
+
+1. Proveer una base PostgreSQL dedicada y una cuenta propietaria para migraciones. TI puede separar posteriormente el rol de migraciones del operativo.
+2. Ejecutar el asistente bajo la cuenta Windows que alojará el servicio. Configurar la base y crear el primer administrador.
+3. Supervisar **SamtecLockers.exe --server** o **python -m slms --server** mediante el mecanismo aprobado por TI.
+4. Colocar un proxy HTTPS con certificado corporativo delante del servicio local. Mantener loopback si ambos están en el mismo equipo. Limitar peticiones a 9 MB y a las redes autorizadas.
+5. Instalar la distribución completa en los clientes, elegir Conectar a servidor de TI e indicar la dirección HTTPS.
+6. Crear cuentas de administración, operación y consulta.
+
+Desde código puede ajustarse escucha/puerto ejecutando scripts/server-settings.py desde un entorno que incluya la raíz del proyecto en PYTHONPATH. Reiniciar el servicio. Se recomienda conservar loopback y usar el proxy corporativo.
+
+Detén el servicio anterior antes de cambiar a una base diferente. La configuración privada está ligada al usuario Windows: copiarla a otro perfil no permite descifrarla. No utilices cambios de conexión como sustituto de una migración planificada.
+
+## Respaldo y restauración PostgreSQL
+
+El respaldo utiliza pg_dump en formato custom. Busca el ejecutable en PATH o en la ubicación estándar de PostgreSQL 18. Una copia queda en la subcarpeta backups de los datos del servidor, además de la descarga. TI debe definir retención y copia externa.
+
+Para restaurar sin sobrescribir la base operativa:
+
+1. Detener el servicio o impedir escrituras.
+2. Crear una base nueva y vacía con el propietario correcto.
+3. En pgAdmin seleccionar esa base → Restore y elegir el archivo .dump. Restaurar sin propietarios anteriores si cambian los roles.
+4. Verificar empleados, casilleros, asignaciones, cuentas e historial; comparar cantidades.
+5. Configurar el servicio hacia esa base, comprobar acceso y una operación controlada y reabrir el servicio.
+6. Reconciliar operaciones posteriores al respaldo. No reenviar automáticamente solicitudes antiguas ya confirmadas. Conservar la base previa hasta cerrar la recuperación.
+
+tests/run_postgres.py ejecuta una restauración real en una base temporal independiente. También se comprueban respaldos SQLite. Esto no sustituye la prueba periódica del ambiente corporativo.
+
+Para SQLite de demostración se utiliza su API de backup consistente. Restaurar con el servicio detenido y conservar la base anterior.
+
+## Identidad y seguridad
+
+PBKDF2-SHA256, sal aleatoria individual y 600000 iteraciones. Tokens aleatorios, almacenados como hash en el servidor, con vigencia de 12 horas. Los cambios de contraseña revocan sesiones. Cada petición comprueba cuenta activa y rol. El login limita intentos por dirección/usuario; complementar en el proxy según la política corporativa.
+
+Los cambios de negocio y su auditoría se guardan juntos. UUID de solicitud, comprobaciones de versión y restricciones únicas impiden efectos duplicados y asignaciones incompatibles. En PostgreSQL se serializan las transacciones cortas de escritura mediante un bloqueo asesor, apropiado para los tres puestos previstos.
+
+La API no permite editar ni borrar auditoría. Esto no hace el registro inmutable frente al administrador de la base de datos.
+
+## Correo y futuras integraciones
+
+La notificación simulada se crea dentro de la transacción de asignación. Para envío real se necesitan registro de aplicación, permisos, remitente y política de entrega/reintentos de Microsoft Graph. No hay envío real habilitado ni SSO de Entra ID en esta entrega.
+
+## Operación
+
+Monitorear /health, espacio libre, proceso y PostgreSQL. application.log rota a 2 MB con tres copias previas. Gestionar también logs del proceso y copias de seguridad desde TI.
+
+Definir con HR conservación de notas, historial y exportaciones. El ejecutable de desarrollo no tiene firma corporativa; TI puede firmarlo al distribuirlo. Revisar las licencias incluidas y la procedencia de la imagen antes de una redistribución externa. Se conserva la atribución de la imagen aportada.
