@@ -25,7 +25,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QGridLayout,
     QFileDialog,
-    QInputDialog,
     QMessageBox,
 )
 from .forms import Form, info, confirm
@@ -46,6 +45,8 @@ STATES = {
 ACTIONS = {
     "employee.create": "Alta de empleado",
     "employee.update": "Actualizar empleado",
+    "employee.deactivate": "Dar de baja y liberar",
+    "mail_settings.update": "Configurar avisos a HR",
     "assignment.assign": "Asignar casillero",
     "assignment.transfer": "Reasignar casillero",
     "assignment.release": "Liberar casillero",
@@ -96,6 +97,7 @@ class Window(QMainWindow):
                 "admins",
                 "audit",
                 "notifications",
+                "mail_settings",
             )
         }
         self.worker = None
@@ -559,6 +561,17 @@ class Window(QMainWindow):
         self.button(row, "Asignar / reasignar", self.employee_assignment)
         layout.addLayout(row)
         row = QHBoxLayout()
+        self.employee_status = QComboBox()
+        self.employee_status.addItem("Empleados activos", "active")
+        self.employee_status.addItem("Empleados inactivos", "inactive")
+        self.employee_status.addItem("Todos los empleados", "all")
+        row.addWidget(self.employee_status)
+        self.employee_status.currentIndexChanged.connect(self.refresh_employees)
+        self.button(row, "Liberar casillero", self.employee_release)
+        self.button(row, "Dar de baja y liberar", self.deactivate_employee)
+        row.addStretch()
+        layout.addLayout(row)
+        row = QHBoxLayout()
         self.button(row, "Importar CSV", self.import_employees)
         self.button(row, "Exportar CSV", lambda: self.export("employees"))
         self.button(row, "Plantilla CSV", self.template_csv)
@@ -587,11 +600,72 @@ class Window(QMainWindow):
             ("notes", "Notas", "text"),
         ]
         form = Form("Editar empleado" if item else "Nuevo empleado", fields, item or {"active": True}, self)
+        if item and item["active"]:
+            form.widgets["active"].setEnabled(False)
+            form.widgets["active"].setToolTip("Para registrar una salida utiliza Dar de baja y liberar.")
         if form.exec() == QDialog.DialogCode.Accepted:
             payload = form.values()
             if item:
                 payload["id"] = item["id"]
             self.submit("employee.update" if item else "employee.create", payload, self.versions(("employee", item)))
+
+    def employee_release(self):
+        employee = self.lookup("employees", self.selected(self.employees))
+        current = self.assignment_for(employee_id=employee["id"]) if employee else None
+        if not current:
+            info(self, "Selecciona un empleado con un casillero asignado.")
+            return
+        self.release(current)
+
+    def deactivate_employee(self):
+        employee = self.lookup("employees", self.selected(self.employees))
+        if not employee or not employee["active"]:
+            info(self, "Selecciona un empleado activo.")
+            return
+        current = self.assignment_for(employee_id=employee["id"])
+        locker = self.lookup("lockers", current["locker_id"]) if current else None
+        form = Form(
+            "Dar de baja y liberar",
+            [
+                (
+                    "departure_type",
+                    "Tipo de baja",
+                    [
+                        ("Selecciona el tipo de baja", None),
+                        ("Despido", "despido"),
+                        ("Renuncia", "renuncia"),
+                        ("Fin de contrato", "fin_contrato"),
+                        ("Otra baja", "otra_baja"),
+                    ],
+                ),
+                ("reason", "Motivo interno", "text"),
+                ("locker_verified", "Confirmé que está vacío y utilizable", "bool"),
+            ],
+            parent=self,
+            description=full_name(employee)
+            + " · ID "
+            + employee["employee_number"]
+            + ". "
+            + (
+                "Se cerrará la asignación del casillero " + locker["number"] + ". "
+                if locker
+                else "No tiene casillero asignado. "
+            )
+            + "La persona quedará inactiva y conservará su historial. Se preparará un aviso simulado para HR, sin incluir el motivo interno. Sin verificación física, el casillero quedará pendiente de revisión.",
+            accept_label="Confirmar baja",
+        )
+        form.form_layout.setRowVisible(form.widgets["locker_verified"], locker is not None)
+        if form.exec() != QDialog.DialogCode.Accepted:
+            return
+        payload = form.values()
+        if not payload["departure_type"]:
+            info(self, "Selecciona el tipo de baja.")
+            return
+        if not payload["reason"].strip():
+            info(self, "Indica el motivo interno de la baja.")
+            return
+        payload.update(employee_id=employee["id"], assignment_id=current["id"] if current else None)
+        self.submit("employee.deactivate", payload, self.versions(("employee", employee), ("locker", locker)))
 
     def employee_assignment(self):
         employee = self.lookup("employees", self.selected(self.employees))
@@ -748,13 +822,41 @@ class Window(QMainWindow):
         )
 
     def release(self, assignment):
-        reason, ok = QInputDialog.getText(self, "Liberar casillero", "Motivo de liberación:")
-        if ok and reason.strip():
-            employee = self.lookup("employees", assignment["employee_id"])
-            locker = self.lookup("lockers", assignment["locker_id"])
+        employee = self.lookup("employees", assignment["employee_id"])
+        locker = self.lookup("lockers", assignment["locker_id"])
+        form = Form(
+            "Liberar casillero",
+            [
+                (
+                    "release_type",
+                    "Motivo",
+                    [
+                        ("Solicitud del empleado", "Solicitud del empleado"),
+                        ("Ya no necesita casillero", "Ya no necesita casillero"),
+                        ("Otra devolución", "Otra devolución"),
+                    ],
+                ),
+                ("notes", "Observaciones internas", "text"),
+                ("locker_verified", "Confirmé que está vacío y utilizable", "bool"),
+            ],
+            parent=self,
+            description=full_name(employee)
+            + " · Casillero "
+            + locker["number"]
+            + ". El empleado seguirá activo. Se preparará un aviso simulado al empleado y, si está configurado, a HR. Sin verificación física, el casillero quedará pendiente de revisión.",
+            accept_label="Confirmar liberación",
+        )
+        if form.exec() == QDialog.DialogCode.Accepted:
+            values = form.values()
+            reason = values["release_type"] + (": " + values["notes"].strip() if values["notes"].strip() else "")
             self.submit(
                 "assignment.release",
-                {"employee_id": employee["id"], "assignment_id": assignment["id"], "reason": reason},
+                {
+                    "employee_id": employee["id"],
+                    "assignment_id": assignment["id"],
+                    "reason": reason,
+                    "locker_verified": values["locker_verified"],
+                },
                 self.versions(("employee", employee), ("locker", locker)),
             )
 
@@ -854,11 +956,24 @@ class Window(QMainWindow):
         dialog.resize(950, 550)
         layout = QVBoxLayout(dialog)
         layout.addWidget(QLabel("No se envían correos reales. La integración corporativa se configura con TI."))
-        table = self.table(layout, ["Fecha", "Destinatario", "Asunto", "Estado"])
+        table = self.table(layout, ["Fecha", "Para", "Copia a", "Asunto", "Estado"])
         self.fill(
             table,
             [
-                (n["id"], [local_date(n["at"]), n["recipient"], n["subject"], n["status"]])
+                (
+                    n["id"],
+                    [
+                        local_date(n["at"]),
+                        n["recipient"] or "Sin destinatario",
+                        ", ".join(n.get("cc", [])),
+                        n["subject"],
+                        {
+                            "simulado": "Simulado",
+                            "sin_destinatario": "Falta destinatario",
+                            "simulado_sin_hr": "Simulado · falta correo HR",
+                        }.get(n["status"], n["status"]),
+                    ],
+                )
                 for n in self.data["notifications"]
             ],
         )
@@ -875,6 +990,10 @@ class Window(QMainWindow):
         self.button(row, "Edificios", self.buildings_dialog)
         self.button(row, "Crear copia de seguridad", self.backup)
         layout.addLayout(row)
+        row = QHBoxLayout()
+        self.button(row, "Configurar avisos a HR", self.mail_settings_form)
+        row.addStretch()
+        layout.addLayout(row)
         self.admin_table = self.table(layout, ["Usuario", "Nombre", "Permiso", "Estado"])
         label = QLabel(
             "Servidor: "
@@ -883,6 +1002,24 @@ class Window(QMainWindow):
         )
         label.setWordWrap(True)
         layout.addWidget(label)
+
+    def mail_settings_form(self):
+        if self.session["actor"]["role"] != "admin":
+            info(self, "Solo una cuenta de administración puede configurar los avisos.")
+            return
+        settings = next(iter(self.data.get("mail_settings", [])), None)
+        if not settings:
+            info(self, "Sincroniza con el servidor actualizado antes de configurar los avisos.")
+            return
+        form = Form(
+            "Avisos a Recursos Humanos",
+            [("hr_email", "Correo de HR", "line"), ("copy_hr_on_release", "Copiar a HR en devoluciones", "bool")],
+            settings,
+            self,
+            description="Las bajas se notifican únicamente a HR. Las devoluciones se notifican al empleado y, si activas la opción, a HR. Los avisos se registran en modo simulado: TI debe habilitar el envío corporativo. Cambiar esta configuración solo afecta avisos futuros.",
+        )
+        if form.exec() == QDialog.DialogCode.Accepted:
+            self.submit("mail_settings.update", form.values(), self.versions(("mail_settings", settings)))
 
     def admin_form(self, edit=False):
         item = self.lookup("admins", self.selected(self.admin_table)) if edit else None
@@ -1064,6 +1201,9 @@ class Window(QMainWindow):
         query = self.employee_search.text().casefold()
         rows = []
         for e in self.data["employees"]:
+            status = self.employee_status.currentData()
+            if (status == "active" and not e["active"]) or (status == "inactive" and e["active"]):
+                continue
             assignment = self.assignment_for(employee_id=e["id"])
             locker = self.lookup("lockers", assignment["locker_id"]) if assignment else None
             values = [

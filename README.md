@@ -1,6 +1,8 @@
-# Samtec Lockers · 1.1
+# Samtec Lockers · 1.2
 
 Aplicación Windows con servicio central para recepción y Recursos Humanos.
+
+La versión 1.2 agrega baja y liberación en una operación, devolución voluntaria, filtro de empleados activos/inactivos y avisos simulados con destinatario de HR configurable. Los casilleros devueltos requieren revisión física antes de volver a asignarse, salvo confirmación explícita de que están vacíos y utilizables.
 
 La versión 1.1 incorpora la identidad visual de referencia de Samtec: logo, tipografía Montserrat, encabezado gris y acentos naranjas. Corrige el contraste de los formularios en Windows con modo oscuro. El asistente separa la conexión de la cuenta administradora y permite desplazarse en pantallas pequeñas.
 

@@ -1,5 +1,17 @@
 # Validación de la entrega
 
+## Versión 1.2 · 6 de octubre de 2026
+
+- 36 pruebas verificadas en SQLite y PostgreSQL, utilizando bases temporales.
+- Baja por despido, renuncia, fin de contrato u otra causa, con cierre atómico de asignación e historial.
+- Baja sin casillero, datos desactualizados, operaciones simultáneas y reintento tras pérdida de respuesta.
+- Devolución voluntaria manteniendo al empleado activo; disponibilidad condicionada a revisión física.
+- Avisos simulados a HR y al empleado, copias opcionales, correos ausentes y destinatarios repetidos.
+- Los motivos internos no aparecen en los avisos; solo Administración puede cambiar el destinatario de HR.
+- Migración desde el esquema anterior conservando empleados, asignaciones y notificaciones.
+- Revisión visual de los formularios de baja, devolución y configuración de avisos.
+- Ejecutable independiente verificado: interfaz, servidor, autenticación, baja atómica y aviso simulado único a HR incluso al repetir la solicitud.
+
 Validación realizada en Windows 11 Pro de 64 bits, Python 3.13.15 y PostgreSQL 18.
 
 ## Resultados

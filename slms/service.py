@@ -17,11 +17,12 @@ from .models import (
     Assignment,
     Receipt,
     Audit,
-    Notification,
+    MailSettings,
     Session,
     now,
     record,
 )
+from .notifications import notification
 
 
 class RuleError(Exception):
@@ -69,7 +70,7 @@ def numeric(data, key, minimum, maximum, default):
 def mutate(db, actor, command):
     action, p, versions = command["action"], command["payload"], command["versions"]
     before, target = {}, None
-    admin_actions = ("building.", "plan.", "block.", "admin.")
+    admin_actions = ("building.", "plan.", "block.", "admin.", "mail_settings.")
     if actor.role == "viewer" or (action.startswith(admin_actions) and actor.role != "admin"):
         raise RuleError("Tu cuenta no tiene permiso para esta operación.")
     if action in ("employee.create", "employee.update"):
@@ -97,9 +98,64 @@ def mutate(db, actor, command):
             raise RuleError("El correo no tiene un formato válido.")
         if not isinstance(p.get("active", True), bool):
             raise RuleError("El estado activo debe ser verdadero o falso.")
-        if not p.get("active", True) and target.id and active_assignment(db, employee_id=target.id):
-            raise RuleError("Libera primero el casillero de esta persona.")
+        if not p.get("active", True) and target.id and target.active:
+            raise RuleError("Usa Dar de baja y liberar para conservar el motivo y preparar la notificación a HR.")
         target.active = p.get("active", True)
+    elif action == "employee.deactivate":
+        target = get(db, Employee, p.get("employee_id"))
+        check_version(target, versions, "employee")
+        if not target.active:
+            raise RuleError("La persona ya está inactiva.", "conflicto")
+        departure_type = p.get("departure_type")
+        if departure_type not in ("despido", "renuncia", "fin_contrato", "otra_baja"):
+            raise RuleError("Selecciona un tipo de baja válido.")
+        reason = required(p, "reason", 2000)
+        verified = p.get("locker_verified", False)
+        if not isinstance(verified, bool):
+            raise RuleError("La verificación física debe ser verdadera o falsa.")
+        current = active_assignment(db, employee_id=target.id)
+        if (current.id if current else None) != p.get("assignment_id"):
+            raise RuleError("La asignación cambió. Actualiza la información antes de dar de baja.", "conflicto")
+        before = record(target)
+        locker = None
+        at = now()
+        if current:
+            locker = get(db, Locker, current.locker_id)
+            check_version(locker, versions, "locker")
+            old_assignment = record(current)
+            old_locker = record(locker)
+            current.ended_at, current.ended_by, current.end_reason = at, actor.id, reason
+            current.version += 1
+            locker.condition = "utilizable" if verified else "pendiente"
+            locker.version += 1
+            db.add(
+                Audit(
+                    command_id=command["id"],
+                    actor_id=actor.id,
+                    at=at,
+                    action="assignment.release",
+                    target_id=current.id,
+                    before={"assignment": old_assignment, "locker": old_locker},
+                    after=dict(record(current), locker_condition=locker.condition),
+                    reason=reason,
+                )
+            )
+        target.active = False
+        target.extra = dict(
+            target.extra or {}, departure={"type": departure_type, "reason": reason, "at": at, "by": actor.id}
+        )
+        notification(db, command["id"], target, action, locker)
+    elif action == "mail_settings.update":
+        target = get(db, MailSettings, "mail")
+        check_version(target, versions, "mail_settings")
+        before = record(target)
+        email = str(p.get("hr_email", "")).strip()
+        if len(email) > 254 or (email and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email)):
+            raise RuleError("El correo de HR no tiene un formato válido.")
+        if not isinstance(p.get("copy_hr_on_release", True), bool):
+            raise RuleError("La opción de copia a HR debe ser verdadera o falsa.")
+        target.hr_email = email
+        target.copy_hr_on_release = p.get("copy_hr_on_release", True)
     elif action in ("building.create", "building.update"):
         target = get(db, Building, p.get("id")) if action.endswith("update") else Building()
         if target.id:
@@ -224,6 +280,8 @@ def mutate(db, actor, command):
         check_version(employee, versions, "employee")
         current = active_assignment(db, employee_id=employee.id)
         reason = required(p, "reason", 2000)
+        if action == "assignment.release" and not isinstance(p.get("locker_verified", False), bool):
+            raise RuleError("La verificación física debe ser verdadera o falsa.")
         before = {"assignment": record(current) if current else None}
         if action != "assignment.assign":
             if not current or current.id != p.get("assignment_id"):
@@ -244,6 +302,9 @@ def mutate(db, actor, command):
         if current:
             current.ended_at, current.ended_by, current.end_reason = now(), actor.id, reason
             current.version += 1
+            if action == "assignment.release":
+                before["locker"] = record(old_locker)
+                old_locker.condition = "utilizable" if p.get("locker_verified", False) else "pendiente"
             old_locker.version += 1
             db.flush()
         if action == "assignment.release":
@@ -254,15 +315,7 @@ def mutate(db, actor, command):
             locker.version += 1
         employee.version += 1
         db.flush()
-        if employee.email:
-            db.add(
-                Notification(
-                    command_id=command["id"],
-                    recipient=employee.email,
-                    subject="Samtec Lockers · actualización de asignación",
-                    body=f"Empleado {employee.employee_number}: {action}. Motivo: {reason}. Casillero: {get(db, Locker, target.locker_id).number}. Confirmado: {now()}. Esta notificación es una simulación; no se envió correo.",
-                )
-            )
+        notification(db, command["id"], employee, action, get(db, Locker, target.locker_id))
     elif action in ("admin.create", "admin.update"):
         target = get(db, Admin, p.get("id")) if action.endswith("update") else Admin()
         if target.id:
@@ -289,6 +342,8 @@ def mutate(db, actor, command):
         target.version += 1
     db.flush()
     after = record(target)
+    if action == "assignment.release":
+        after["locker_condition"] = get(db, Locker, target.locker_id).condition
     after.pop("background", None)
     db.add(
         Audit(

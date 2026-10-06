@@ -4,6 +4,24 @@
 
 Cada responsable usa su cuenta individual. Administración gestiona cuentas, edificios, planos, inventario y respaldos. Operación gestiona empleados, verifica casilleros y realiza asignaciones. Consulta permite ver/exportar información; el servicio rechaza las modificaciones.
 
+## Bajas y devoluciones
+
+En Empleados selecciona una persona y utiliza **Dar de baja y liberar** para registrar un despido, renuncia, fin de contrato u otra baja. Selecciona el tipo y escribe un motivo interno. Al confirmar el servidor, la persona queda inactiva y su asignación termina en la misma operación; se conservan su historial, fecha y responsable. También funciona si la persona no tenía casillero.
+
+Para una devolución voluntaria usa **Liberar casillero**. El empleado permanece activo. Puedes seleccionar Solicitud del empleado, Ya no necesita casillero u Otra devolución, y añadir observaciones internas.
+
+En ambos casos el casillero queda **pendiente de verificar**. Marca Confirmé que está vacío y utilizable solamente si ya realizaste esa revisión física. Si hay pertenencias, daño o una ocupación dudosa, déjalo pendiente y resuelve la situación antes de volver a asignarlo.
+
+La lista muestra empleados activos por defecto. Cambia el filtro a **Empleados inactivos** o **Todos los empleados** para consultar bajas. Para un reingreso puedes editar al empleado inactivo y marcar Activo; esto conserva el historial y no recupera automáticamente un casillero anterior.
+
+## Avisos a HR
+
+En **Administración → Configurar avisos a HR** indica el correo designado y si deseas copiar a HR en las devoluciones. Solo Administración puede modificar esta configuración. Los avisos de baja se dirigen únicamente a HR; los de devolución al empleado, con la copia elegida. Si el empleado no tiene correo y corresponde copiar a HR, HR será el destinatario principal.
+
+Los avisos siguen en **modo simulado** hasta habilitar la integración corporativa con TI. Se registran automáticamente al confirmar la operación, sin incluir motivos internos ni detalles del despido. Consulta **Historial → Ver notificaciones de correo** para ver Para, Copia a, contenido y estado.
+
+Si falta un correo se registra Falta destinatario o Simulado · falta correo HR; la operación de baja/devolución no se pierde. Cambiar la configuración afecta avisos futuros: no envía ni modifica retroactivamente los anteriores. Una solicitud pendiente por falta de conexión tampoco genera aviso hasta que el servidor la confirme. Los reintentos del mismo identificador no duplican el registro de notificación.
+
 ## Inventario y mapa
 
 Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, por filas de izquierda a derecha. También puedes generar una secuencia desde un primer número.

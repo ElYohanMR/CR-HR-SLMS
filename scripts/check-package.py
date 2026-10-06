@@ -7,6 +7,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
+from datetime import datetime, timezone
 import httpx
 from slms.config import save_private
 
@@ -49,7 +51,44 @@ try:
         snapshot = client.get("/snapshot").json()
         assert len(snapshot["lockers"]) == 16
         assert len(snapshot["plans"]) == 1
-        print("PASS: executable interface, encrypted configuration, server, authentication and inventory.")
+
+        def request(action, payload, versions):
+            return {
+                "id": str(uuid.uuid4()),
+                "device_id": "package-check",
+                "client_at": datetime.now(timezone.utc).isoformat(),
+                "action": action,
+                "payload": payload,
+                "versions": versions,
+            }
+
+        settings = snapshot["mail_settings"][0]
+        notice_settings = request(
+            "mail_settings.update", {"hr_email": "hr@example.com"}, {"mail_settings:mail": settings["version"]}
+        )
+        assert client.post("/commands", json=notice_settings).json()["status"] == "confirmada"
+        employee = snapshot["employees"][0]
+        assignment = next(a for a in snapshot["assignments"] if a["ended_at"] is None)
+        locker = next(item for item in snapshot["lockers"] if item["id"] == assignment["locker_id"])
+        departure = request(
+            "employee.deactivate",
+            {
+                "employee_id": employee["id"],
+                "assignment_id": assignment["id"],
+                "departure_type": "fin_contrato",
+                "reason": "Prueba aislada del ejecutable",
+            },
+            {"employee:" + employee["id"]: employee["version"], "locker:" + locker["id"]: locker["version"]},
+        )
+        result = client.post("/commands", json=departure).json()
+        assert result["status"] == "confirmada"
+        assert client.post("/commands", json=departure).json() == result
+        snapshot = client.get("/snapshot").json()
+        assert not snapshot["employees"][0]["active"]
+        notices = [n for n in snapshot["notifications"] if n["command_id"] == departure["id"]]
+        assert len(notices) == 1 and notices[0]["recipient"] == "hr@example.com"
+        assert notices[0]["status"] == "simulado"
+        print("PASS: executable interface, server, authentication, atomic departure and unique simulated HR notice.")
         print("Preview profile: " + str(profile))
 finally:
     process.terminate()

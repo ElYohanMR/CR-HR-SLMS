@@ -48,6 +48,10 @@ La API no permite editar ni borrar auditoría. Esto no hace el registro inmutabl
 
 La notificación simulada se crea dentro de la transacción de asignación. Para envío real se necesitan registro de aplicación, permisos, remitente y política de entrega/reintentos de Microsoft Graph. No hay envío real habilitado ni SSO de Entra ID en esta entrega.
 
+Desde 1.2 las bajas (`employee.deactivate`) cierran la asignación y desactivan al empleado en una única transacción. La devolución y la baja dejan el locker pendiente de revisión salvo confirmación física explícita. La baja conserva su tipo y motivo en `employees.extra.departure`, además de la auditoría y del cierre de asignación. El motivo interno nunca se incluye en los correos nuevos.
+
+La migración 0002 agrega `mail_settings` y el campo JSON `notifications.cc`, sin modificar destinatarios ni auditorías anteriores. El correo de HR y la copia opcional de devoluciones se configuran desde Administración. Cada operación mantiene una única notificación por UUID, con destinatario principal y lista de copias, dentro de la transacción. Los estados `simulado`, `simulado_sin_hr` y `sin_destinatario` nunca indican entrega real. Una futura integración debe manejar envío, reintentos y fallos separadamente, sin revertir la baja ya confirmada ni prometer entrega exactamente una vez mediante SMTP.
+
 ## Operación
 
 Monitorear /health, espacio libre, proceso y PostgreSQL. application.log rota a 2 MB con tres copias previas. Gestionar también logs del proceso y copias de seguridad desde TI.

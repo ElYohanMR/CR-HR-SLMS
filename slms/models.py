@@ -151,9 +151,16 @@ class Notification(Base):
     command_id: Mapped[str] = mapped_column(String(36), unique=True)
     at: Mapped[str] = mapped_column(String(40), default=now)
     recipient: Mapped[str] = mapped_column(String(254))
+    cc: Mapped[list] = mapped_column(JSON, default=list)
     subject: Mapped[str] = mapped_column(String(200))
     body: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(30), default="simulado")
+
+
+class MailSettings(Entity, Base):
+    __tablename__ = "mail_settings"
+    hr_email: Mapped[str] = mapped_column(String(254), default="")
+    copy_hr_on_release: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 def record(obj):

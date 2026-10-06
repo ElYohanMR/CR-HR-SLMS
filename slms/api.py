@@ -22,10 +22,12 @@ from .models import (
     Assignment,
     Audit,
     Notification,
+    MailSettings,
     now,
     record,
 )
 from .service import execute, RuleError
+from . import __version__
 
 
 class Login(BaseModel):
@@ -56,7 +58,7 @@ class Command(BaseModel):
 
 
 def create_app(engine, installation="test", demo=False):
-    app = FastAPI(title="Samtec Lockers", version="1.0.0", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="Samtec Lockers", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
     sessions = sessionmaker(engine)
     attempts = defaultdict(deque)
     attempt_lock = threading.Lock()
@@ -89,7 +91,7 @@ def create_app(engine, installation="test", demo=False):
     def health():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return {"app": "samtec-lockers", "version": "1.0.0", "installation": installation, "demo": demo}
+        return {"app": "samtec-lockers", "version": __version__, "installation": installation, "demo": demo}
 
     @app.post("/login")
     def login(data: Login, request: Request):
@@ -145,6 +147,7 @@ def create_app(engine, installation="test", demo=False):
                 ("admins", Admin),
                 ("audit", Audit),
                 ("notifications", Notification),
+                ("mail_settings", MailSettings),
             ):
                 query = select(model)
                 if name in ("audit", "notifications"):
