@@ -30,6 +30,16 @@ Los números físicos deben ser únicos en esta instalación. Si se repiten entr
 
 En Editar mapa arrastra bloques o puntos rojos de los contornos. Guarda y espera la confirmación antes de volver a editar. Abrir un bloque permite ver su cuadrícula. La verificación por bloque afecta únicamente los casilleros pendientes; confirma esta acción solo después de comprobar físicamente que todos esos casilleros están vacíos y utilizables.
 
+En **Consultar**, un clic en la etiqueta abre el detalle con disponibles/asignados y **Ver asignaciones del bloque** (casillero, ID, nombre y apellidos). Verde significa que hay casilleros verificados disponibles; rojo significa que todos están asignados; ámbar significa que no hay disponibles pero no todos están asignados (por verificar, mantenimiento o retirados). Los colores reflejan la última sincronización confirmada, no solicitudes pendientes.
+
+Las etiquetas muestran únicamente el código y se reducen cuando hay bloques próximos, incluso en filas de 40 bloques. Acerca con la rueda para leerlas y arrastra el fondo para recorrer la pared; Ajustar vista vuelve al plano completo. Los bloques colocados exactamente en la misma posición deben separarse en Editar mapa. La imagen conserva su proporción; X e Y continúan expresándose de 0 a 1000 respecto al ancho y alto.
+
+En **Inventario → Exportar bloques y ubicaciones** puedes guardar Excel (.xlsx) o CSV: una fila por casillero, con plano, edificio, bloque, lado, ubicación, dimensiones, X/Y, rotación y numeración. Esta exportación no incluye personas. **Plantilla de inventario** crea los encabezados y, en Excel, una hoja de instrucciones. Mantén los números como texto para conservar ceros iniciales.
+
+Para crear bloques, deja id_bloque/version_bloque vacíos, usa un plano y edificio existentes, y completa todas las posiciones (fila/columna comienzan en 1). Para actualizar, exporta primero y conserva los IDs y versiones: solo se modifican nombre, X/Y y rotación. Repite los mismos datos del bloque en todas sus filas. Importar no cambia dimensiones, números, condiciones ni asignaciones existentes. Los casilleros nuevos quedan pendientes de verificación física.
+
+**Importar bloques Excel / CSV** valida el archivo completo y muestra una vista previa antes de confirmar. Se admite hasta 20 000 casilleros y 2000 bloques por archivo. Se guarda una sola solicitud en la cola local; el servidor aplica todo en una transacción o rechaza todo si existe un conflicto. Una exportación sin cambios no genera solicitudes. Si otro equipo actualizó un bloque, exporta nuevamente y revisa los cambios antes de reintentar.
+
 ## Asignaciones
 
 Abre un casillero disponible, selecciona una persona activa e indica el motivo. Puedes escribir en la lista para buscar; elige una sugerencia. Si la persona tiene otro casillero, se propone una reasignación que cierra la anterior y crea la nueva en una sola transacción.

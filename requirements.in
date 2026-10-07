@@ -1,6 +1,7 @@
 # Dependencias directas del entorno inicial de desarrollo (Windows / Python 3.13).
 # requirements.txt conserva las versiones exactas verificadas.
 PySide6
+openpyxl
 fastapi
 uvicorn
 SQLAlchemy

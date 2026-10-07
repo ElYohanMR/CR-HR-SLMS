@@ -1,5 +1,18 @@
 # Validación de la entrega
 
+## Versión 1.3 · 6 de octubre de 2026
+
+- 51 pruebas pasan con SQLite. En PostgreSQL, 50 pasan en esquemas temporales; la prueba restante de respaldo/restauración pasa en un clúster temporal independiente. La cuenta de aplicación no tiene permiso para crear bases, por lo que esa prueba se trasladó al clúster de pruebas sin elevar sus permisos.
+- Excel y CSV: creación de bloques 3 × 4, lectura/escritura preservando ceros iniciales, exportación/reimportación sin cambios, edición de posiciones y nombres conservando casilleros y asignaciones.
+- Rechazo de filas incompletas, duplicadas, inconsistentes, coordenadas no finitas, dimensiones fraccionarias, numeración modificada, versiones antiguas y fórmulas de Excel.
+- Importación atómica: un conflicto revierte todos los bloques y su auditoría; los reintentos no duplican bloques. Importación restringida a Administración.
+- Interfaz: fila de 40 bloques sin solapamiento en la disposición probada, consulta con un clic, acceso a la lista de asignaciones vigentes, códigos de color verde/rojo/ámbar y movimiento conservando coordenadas normalizadas.
+- Imagen 3956 × 2478 conservando proporciones. Realineación del plano existente mediante 1738 correspondencias visuales entre imágenes; respaldo cifrado local previo de contornos y posiciones. No se añadieron bloques ficticios al inventario real.
+- Revisión visual con 40 bloques ficticios: textos escalados sin perder dígitos; vista de consulta e inventario sin recortes. Las etiquetas cercanas requieren acercar el mapa para leerlas.
+- Ejecutable verificado en un perfil aislado: interfaz, servidor, autenticación, importación Excel, actualización de posiciones, idempotencia y avisos simulados.
+
+No cambió el esquema de base de datos. El plano existente se actualizó con auditoría, conservando empleados, casilleros y asignaciones. Los demás datos de pruebas se mantuvieron en entornos temporales.
+
 ## Versión 1.2 · 6 de octubre de 2026
 
 - 36 pruebas verificadas en SQLite y PostgreSQL, utilizando bases temporales.

@@ -70,9 +70,28 @@ def numeric(data, key, minimum, maximum, default):
 def mutate(db, actor, command):
     action, p, versions = command["action"], command["payload"], command["versions"]
     before, target = {}, None
-    admin_actions = ("building.", "plan.", "block.", "admin.", "mail_settings.")
+    admin_actions = ("building.", "plan.", "block.", "admin.", "mail_settings.", "inventory.")
     if actor.role == "viewer" or (action.startswith(admin_actions) and actor.role != "admin"):
         raise RuleError("Tu cuenta no tiene permiso para esta operación.")
+    if action == "inventory.import":
+        operations = p.get("operations")
+        if not isinstance(operations, list) or not 1 <= len(operations) <= 2000:
+            raise RuleError("La importación debe contener de 1 a 2000 bloques.")
+        results = []
+        for operation in operations:
+            if (
+                not isinstance(operation, dict)
+                or operation.get("action") not in ("block.create", "block.update")
+                or not isinstance(operation.get("payload"), dict)
+            ):
+                raise RuleError("La importación solo admite creación y ubicación de bloques.")
+            result = mutate(db, actor, dict(command, action=operation["action"], payload=operation["payload"]))
+            results.append(result["target_id"])
+        return {
+            "status": "confirmada",
+            "message": f"Importación confirmada: {len(results)} bloques.",
+            "target_ids": results,
+        }
     if action in ("employee.create", "employee.update"):
         if action.endswith("update"):
             target = get(db, Employee, p.get("id"))

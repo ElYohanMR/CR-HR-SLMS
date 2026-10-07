@@ -49,7 +49,7 @@ def test_window_map_and_inventory(qtbot, system, tmp_path, monkeypatch):
     window.edit_map.setChecked(True)
     window.toggle_map()
     block = window.map.block_items[0]
-    block.setPos(222, 333)
+    block.setPos(window.map.to_scene([222, 333]))
     assert window.map.dirty["demo-block"] == (222, 333)
     window.employee_search.setText("does not exist")
     assert window.employees.rowCount() == 0

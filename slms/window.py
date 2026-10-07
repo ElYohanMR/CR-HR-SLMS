@@ -53,6 +53,7 @@ ACTIONS = {
     "locker.update": "Actualizar casillero",
     "block.create": "Crear bloque",
     "block.update": "Mover / actualizar bloque",
+    "inventory.import": "Importar inventario de bloques",
     "plan.create": "Crear plano",
     "plan.update": "Actualizar plano",
     "building.create": "Crear edificio",
@@ -310,13 +311,16 @@ class Window(QMainWindow):
     def make_map(self):
         layout = self.page(
             "Mapa de casilleros",
-            "Doble clic en un bloque para abrirlo. Rueda del mouse para acercar; arrastra el fondo para desplazarte.",
+            "Consulta un bloque con un clic. Acerca con la rueda para leer filas densas; arrastra el fondo para desplazarte.",
         )
         row = QHBoxLayout()
         self.plan_combo = QComboBox()
         row.addWidget(self.plan_combo, 1)
         self.plan_combo.currentIndexChanged.connect(self.render_map)
         self.button(row, "Ajustar vista", lambda: self.map.fit())
+        self.consult_map = self.button(row, "Consultar", self.consult_mode)
+        self.consult_map.setCheckable(True)
+        self.consult_map.setChecked(True)
         self.edit_map = self.button(row, "Editar mapa", self.toggle_map)
         self.edit_map.setCheckable(True)
         self.save_map_button = self.button(row, "Guardar posiciones", self.save_map)
@@ -330,9 +334,10 @@ class Window(QMainWindow):
         layout.addLayout(row)
         self.map = MapView()
         self.map.blockOpened.connect(self.open_block)
+        self.map.assignmentsOpened.connect(self.block_assignments)
         layout.addWidget(self.map, 1)
         legend = QLabel(
-            "Verde: bloque con disponibilidad · Gris: sin disponibles · Rojo: contorno editable · Norte según el levantamiento físico"
+            "Verde: hay disponibles · Rojo: completamente asignado · Ámbar: sin disponibles, requiere revisión. Acerca para leer etiquetas pequeñas."
         )
         legend.setWordWrap(True)
         layout.addWidget(legend)
@@ -349,8 +354,55 @@ class Window(QMainWindow):
             info(self, "Solo los administradores editan el mapa.")
             return
         self.map.set_editing(self.edit_map.isChecked())
+        self.consult_map.setChecked(not self.edit_map.isChecked())
         if not self.edit_map.isChecked():
             self.render_map()
+
+    def consult_mode(self):
+        self.edit_map.setChecked(False)
+        self.consult_map.setChecked(True)
+        self.map.set_editing(False)
+        self.render_map()
+
+    def block_assignments(self, id):
+        block = self.lookup("blocks", id)
+        if not block:
+            return
+        lockers = {item["id"]: item for item in self.data["lockers"] if item["block_id"] == id}
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Asignaciones · " + block["label"])
+        dialog.resize(760, 480)
+        layout = QVBoxLayout(dialog)
+        table = self.table(layout, ["Casillero", "ID empleado", "Nombre", "Primer apellido", "Segundo apellido"])
+        rows = []
+        for assignment in self.data["assignments"]:
+            if assignment["ended_at"] is not None or assignment["locker_id"] not in lockers:
+                continue
+            person = self.lookup("employees", assignment["employee_id"]) or {}
+            locker = lockers[assignment["locker_id"]]
+            rows.append(
+                (
+                    locker["id"],
+                    [
+                        locker["number"],
+                        person.get("employee_number", ""),
+                        person.get("first_name", ""),
+                        person.get("surname", ""),
+                        person.get("second_surname", ""),
+                    ],
+                )
+            )
+        rows.sort(key=lambda entry: entry[1][0])
+        self.fill(table, rows)
+        layout.addWidget(
+            QLabel(
+                f"{len(rows)} asignaciones vigentes · Según la última sincronización."
+                if rows
+                else "Este bloque no tiene asignaciones vigentes."
+            )
+        )
+        self.button(layout, "Cerrar", dialog.accept)
+        dialog.exec()
 
     def save_map(self):
         if not self.map.editing or not self.map.plan:
@@ -366,6 +418,7 @@ class Window(QMainWindow):
             payload["polygons"] = self.map.shapes
             self.submit("plan.update", payload, self.versions(("plan", plan)))
         self.edit_map.setChecked(False)
+        self.consult_map.setChecked(True)
         self.map.set_editing(False)
         info(self, "Las modificaciones se enviaron como solicitudes. Revisa su resultado antes de volver a editar.")
 
@@ -501,9 +554,7 @@ class Window(QMainWindow):
         dialog = QDialog(self)
         dialog.setWindowTitle("Bloque " + block["label"])
         layout = QVBoxLayout(dialog)
-        layout.addWidget(
-            QLabel(f"{block['rows']} filas × {block['columns']} columnas · doble clic en el mapa para abrir")
-        )
+        layout.addWidget(QLabel(f"{block['rows']} filas × {block['columns']} columnas"))
         grid = QGridLayout()
         layout.addLayout(grid)
         for locker in sorted(
@@ -730,10 +781,92 @@ class Window(QMainWindow):
         self.button(row, "Abrir seleccionado", lambda: self.locker_dialog(self.selected(self.inventory)))
         self.button(row, "Exportar CSV", lambda: self.export("lockers"))
         layout.addLayout(row)
+        row = QHBoxLayout()
+        self.button(row, "Importar bloques Excel / CSV", self.import_inventory)
+        self.button(row, "Exportar bloques y ubicaciones", self.export_inventory)
+        self.button(row, "Plantilla de inventario", lambda: self.export_inventory(template=True))
+        layout.addLayout(row)
         self.inventory = self.table(layout, ["Número", "Ubicación", "Estado", "Empleado", "Fila / columna"])
         self.locker_search.textChanged.connect(self.refresh_inventory)
         self.inventory_filter.currentIndexChanged.connect(self.refresh_inventory)
         self.inventory.cellDoubleClicked.connect(lambda r, c: self.locker_dialog(self.selected(self.inventory)))
+
+    def export_inventory(self, checked=False, template=False):
+        from .inventory_io import write_inventory, export_rows
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Guardar inventario",
+            "plantilla-inventario.xlsx" if template else "inventario-bloques.xlsx",
+            "Excel (*.xlsx);;CSV (*.csv)",
+        )
+        if not path:
+            return
+        try:
+            write_inventory(path, [] if template else export_rows(self.data))
+            info(
+                self,
+                "Archivo guardado. Incluye ubicaciones y numeración; no incluye datos de empleados."
+                + (" Consulta la hoja Instrucciones." if path.lower().endswith(".xlsx") else ""),
+            )
+        except Exception as exc:
+            info(self, "No se pudo guardar el archivo: " + str(exc))
+
+    def import_inventory(self):
+        from .inventory_io import read_inventory, prepare_import
+
+        if self.session["actor"]["role"] != "admin":
+            info(self, "Solo los administradores importan bloques.")
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Importar inventario", "", "Inventario (*.xlsx *.csv)")
+        if not path:
+            return
+        try:
+            rows = read_inventory(path)
+            operations, versions = prepare_import(rows, self.data)
+        except Exception as exc:
+            info(self, "No se importó ningún registro. " + str(exc))
+            return
+        if not operations:
+            info(self, "El archivo coincide con el inventario actual. No hay cambios que importar.")
+            return
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Revisar importación de inventario")
+        dialog.resize(900, 580)
+        layout = QVBoxLayout(dialog)
+        creates = sum(op["action"] == "block.create" for op in operations)
+        description = QLabel(
+            f"{creates} bloques nuevos · {len(operations) - creates} bloques a actualizar.\nLos casilleros nuevos quedan pendientes de verificación. Las asignaciones se conservan.\nSe enviará una sola solicitud: si existe un conflicto, no se aplica ningún cambio del archivo."
+        )
+        description.setWordWrap(True)
+        layout.addWidget(description)
+        table = self.table(layout, ["Operación", "Bloque", "Plano", "Edificio", "Casilleros", "X", "Y", "Rotación"])
+        self.fill(
+            table,
+            [
+                (
+                    str(i),
+                    [
+                        "Crear" if op["action"] == "block.create" else "Actualizar",
+                        p["label"],
+                        (self.lookup("plans", p["plan_id"]) or {}).get("name", ""),
+                        (self.lookup("buildings", p["building_id"]) or {}).get("code", ""),
+                        p["rows"] * p["columns"],
+                        p["x"],
+                        p["y"],
+                        p["rotation"],
+                    ],
+                )
+                for i, op in enumerate(operations)
+                for p in [op["payload"]]
+            ],
+        )
+        row = QHBoxLayout()
+        layout.addLayout(row)
+        self.button(row, "Importar inventario", dialog.accept)
+        self.button(row, "Cancelar", dialog.reject)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.submit("inventory.import", {"operations": operations}, versions)
 
     def locker_dialog(self, id):
         locker = self.lookup("lockers", id)

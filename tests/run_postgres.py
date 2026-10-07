@@ -60,7 +60,9 @@ def main():
         env = dict(
             os.environ, SLMS_TEST_POSTGRES=f"postgresql+psycopg://slms_test:{quote(password)}@127.0.0.1:{port}/postgres"
         )
-        result = subprocess.run([sys.executable, "-m", "pytest", "-q", "--disable-warnings", "--maxfail=3"], env=env)
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "--disable-warnings", "--maxfail=3", *sys.argv[1:]], env=env
+        )
         return result.returncode
     finally:
         if started:

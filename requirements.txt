@@ -1,4 +1,6 @@
 alembic==1.20.0
+openpyxl==3.1.5
+et_xmlfile==2.0.0
 altgraph==0.17.5
 annotated-doc==0.0.5
 annotated-types==0.8.0

@@ -70,6 +70,27 @@ def run(app):
             )
             assert result.json()["status"] == "confirmada"
             snapshot = client.get("/snapshot").json()
+        from .inventory_io import export_rows, write_inventory, read_inventory, prepare_import
+
+        exported = home() / "inventory-roundtrip.xlsx"
+        write_inventory(exported, export_rows(snapshot))
+        imported = read_inventory(exported)
+        assert prepare_import(imported, snapshot) == ([], {})
+        for row in imported:
+            row["x"] = str(float(row["x"]) + 1)
+        operations, versions = prepare_import(imported, snapshot)
+        request = {
+            "id": str(uuid.uuid4()),
+            "device_id": "preview",
+            "client_at": now(),
+            "action": "inventory.import",
+            "payload": {"operations": operations},
+            "versions": versions,
+        }
+        result = client.post("/commands", json=request).json()
+        assert result["status"] == "confirmada"
+        assert client.post("/commands", json=request).json() == result
+        snapshot = client.get("/snapshot").json()
     store = LocalStore(home() / "preview-client.sqlite3")
     store.put("snapshot", snapshot)
     Window.sync = lambda self: None
@@ -82,6 +103,10 @@ def run(app):
     window.map.fit()
     QApplication.processEvents()
     window.grab().save(str(home() / "mapa.png"))
+    window.map.show_card(snapshot["blocks"][0]["id"])
+    QApplication.processEvents()
+    window.grab().save(str(home() / "mapa-consulta.png"))
+    window.map.hide_card()
     window.nav.setCurrentRow(3)
     QApplication.processEvents()
     window.grab().save(str(home() / "inventario.png"))

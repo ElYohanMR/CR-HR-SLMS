@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import secrets
+import json
 from sqlalchemy import create_engine, event, select, text
 from sqlalchemy.orm import sessionmaker
 from alembic import command
@@ -66,37 +67,13 @@ def initialize(engine, username, password, demo=False):
                 role="admin",
             )
         )
-        a = Building(id="building-1", code="E1", name="Edificio 1 · superior (por confirmar)")
-        b = Building(id="building-2", code="E2", name="Edificio 2 · inferior (por confirmar)")
+        a = Building(id="building-1", code="E2", name="Edificio 2 · superior")
+        b = Building(id="building-2", code="E1", name="Edificio 1 · inferior")
         db.add_all([a, b])
         db.flush()
-        shapes = [
-            {"building_id": a.id, "points": [[326, 250], [652, 315], [623, 454], [297, 383]]},
-            {
-                "building_id": b.id,
-                "points": [
-                    [327, 406],
-                    [637, 476],
-                    [627, 528],
-                    [771, 555],
-                    [700, 899],
-                    [494, 852],
-                    [514, 766],
-                    [453, 752],
-                    [444, 794],
-                    [318, 764],
-                    [310, 791],
-                    [222, 769],
-                    [238, 681],
-                    [274, 688],
-                    [291, 595],
-                    [345, 607],
-                    [370, 493],
-                    [312, 486],
-                ],
-            },
-        ]
-        image = asset("site.png")
+        map_data = json.loads(asset("site-map.json").read_text(encoding="utf-8"))
+        shapes = map_data["polygons"]
+        image = asset("site-hd.jpg")
         plan = Plan(
             id="campus",
             name="Campus · exteriores",
@@ -115,8 +92,8 @@ def initialize(engine, username, password, demo=False):
                 location="EXT",
                 rows=4,
                 columns=4,
-                x=460,
-                y=438,
+                x=map_data["demo_position"][0],
+                y=map_data["demo_position"][1],
             )
             db.add(block)
             db.flush()
