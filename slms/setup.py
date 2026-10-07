@@ -185,6 +185,19 @@ def ensure_server(config):
     raise ValueError("El servicio local no inició. Revisa PostgreSQL y el archivo server.log de la carpeta de datos.")
 
 
+def saved_session_valid(config, session):
+    if not session or session.get("installation") != config["installation"]:
+        return False
+    try:
+        response = httpx.get(
+            config["url"] + "/me", headers={"Authorization": "Bearer " + session["token"]}, timeout=3, trust_env=False
+        )
+        return response.status_code not in (401, 403)
+    except httpx.HTTPError:
+        # Offline work may still be queued; only the server can confirm it.
+        return True
+
+
 def login(config, parent=None):
     form = Form(
         "Iniciar sesión",

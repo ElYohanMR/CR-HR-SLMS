@@ -2,6 +2,12 @@
 
 ## Cuentas
 
+El botón **Opciones**, en la cabecera, reúne conexión y solicitudes, mapa, inventario, empleados, administración, respaldos, historial y ayuda. Las acciones que tu cuenta no puede realizar aparecen deshabilitadas.
+
+Si la sesión vence, las solicitudes pasan a **Requiere sesión** y aparece **Iniciar sesión para enviar solicitudes pendientes**. Al abrir la aplicación con una sesión vencida se solicita nuevamente el acceso. Inicia sesión con la cuenta que creó las solicitudes: se enviarán automáticamente conservando sus identificadores. No vuelvas a pulsar Eliminar para la misma solicitud pendiente; la aplicación evita duplicarla. Si una versión anterior guardó dos eliminaciones del mismo elemento, el servidor confirma que ya estaba eliminado sin repetir el cambio.
+
+**Opciones → Conexión y solicitudes** permite sincronizar, abrir la cola, reintentar pendientes o consultar el estado. Una solicitud pendiente o que requiere sesión todavía no confirma una eliminación. Los conflictos deben revisarse antes de generar otra solicitud.
+
 Cada responsable usa su cuenta individual. Administración gestiona cuentas, edificios, planos, inventario y respaldos. Operación gestiona empleados, verifica casilleros y realiza asignaciones. Consulta permite ver/exportar información; el servicio rechaza las modificaciones.
 
 ## Bajas y devoluciones

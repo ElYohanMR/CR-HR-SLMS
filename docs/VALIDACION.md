@@ -1,5 +1,14 @@
 # Validación de la entrega
 
+## Versión 1.5 · 7 de octubre de 2026
+
+- Diagnóstico: la sesión local guardada recibía HTTP 401 y las dos eliminaciones seguían con cero intentos. El servidor estaba disponible; no era un fallo de eliminación ni de PostgreSQL.
+- Las solicitudes pendientes se marcan Requiere sesión cuando el servidor rechaza la sesión. La interfaz muestra un botón de acceso y el arranque valida la sesión guardada. El trabajo sin conexión conserva la cola local.
+- Una eliminación pendiente del mismo elemento reutiliza su solicitud local. Solicitudes duplicadas de versiones anteriores confirman el estado eliminado sin repetir cambios ni auditoría; una eliminación antigua no puede volver a eliminar un elemento restaurado.
+- Menú Opciones con mapa, inventario, empleados, conexión, solicitudes, administración, respaldos, historial y ayuda; acciones restringidas por rol.
+- 59 pruebas pasan en SQLite; 9 pruebas de regresión de sincronización/eliminación pasan en un clúster PostgreSQL temporal. Incluyen sesión vencida → inicio de sesión → confirmación de la solicitud original, duplicados y recuperación de inventario.
+- No se omitió la autenticación ni se modificaron contraseñas. Las eliminaciones guardadas requieren que su responsable inicie sesión localmente.
+
 ## Versión 1.4 · 7 de octubre de 2026
 
 - 55 pruebas pasan en un clúster PostgreSQL temporal independiente, incluyendo respaldo/restauración y la migración 0003. En SQLite pasan las pruebas anteriores y las nuevas de eliminación, restauración y búsqueda; una prueba adicional verifica búsqueda entre planos, códigos ambiguos y resultados ausentes.

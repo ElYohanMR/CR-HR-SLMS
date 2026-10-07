@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QFileDialog,
     QMessageBox,
+    QMenu,
 )
 from .forms import Form, info, confirm
 from .local import LocalStore
@@ -121,6 +122,11 @@ class Window(QMainWindow):
         top.addWidget(self.identity)
         self.button(top, "Iniciar sesión", self.relogin)
         self.button(top, "Salir de la cuenta", self.logout)
+        self.options_button = QPushButton("Opciones")
+        self.options_menu = QMenu(self.options_button)
+        self.options_button.setMenu(self.options_menu)
+        self.options_menu.aboutToShow.connect(self.populate_options)
+        top.addWidget(self.options_button)
         outer.addWidget(header)
         content = QWidget()
         content_layout = QVBoxLayout(content)
@@ -131,6 +137,11 @@ class Window(QMainWindow):
         self.banner.setWordWrap(True)
         self.banner.setObjectName("banner")
         content_layout.addWidget(self.banner)
+        self.session_button = QPushButton("Iniciar sesión para enviar solicitudes pendientes")
+        self.session_button.clicked.connect(self.relogin)
+        self.session_button.setProperty("primary", True)
+        self.session_button.hide()
+        content_layout.addWidget(self.session_button)
         body = QHBoxLayout()
         content_layout.addLayout(body, 1)
         self.nav = QListWidget()
@@ -231,6 +242,105 @@ class Window(QMainWindow):
         self.sync()
         self.statusBar().showMessage("Solicitud guardada. Consulta su confirmación en Solicitudes.", 12000)
 
+    def populate_options(self):
+        self.options_menu.clear()
+        role = self.session["actor"]["role"]
+        admin, editor = role == "admin", role != "viewer"
+
+        def add(menu, title, callback, enabled=True):
+            action = menu.addAction(title)
+            action.triggered.connect(lambda checked=False: callback())
+            action.setEnabled(enabled)
+
+        connection = self.options_menu.addMenu("Conexión y solicitudes")
+        add(connection, "Iniciar sesión / cambiar cuenta", self.relogin)
+        add(connection, "Sincronizar ahora", self.sync)
+        add(connection, "Ver solicitudes y sus resultados", lambda: self.nav.setCurrentRow(4))
+        add(connection, "Reintentar solicitudes pendientes", self.retry_pending)
+        add(connection, "Estado de conexión", self.connection_info)
+        maps = self.options_menu.addMenu("Mapa")
+        add(maps, "Abrir mapa / buscar un bloque", lambda: (self.nav.setCurrentRow(1), self.map_search.setFocus()))
+        add(maps, "Ajustar vista", self.map.fit)
+        add(maps, "Consultar", self.consult_mode)
+        add(
+            maps,
+            "Editar mapa",
+            lambda: (self.nav.setCurrentRow(1), self.edit_map.setChecked(True), self.toggle_map()),
+            admin,
+        )
+        add(maps, "Guardar posiciones", self.save_map, admin and self.map.editing)
+        maps.addSeparator()
+        add(maps, "Nuevo bloque", self.block_form, admin)
+        add(maps, "Nuevo plano", self.plan_form, admin)
+        add(maps, "Configurar plano actual", lambda: self.plan_form(True), admin and bool(self.map.plan))
+        add(maps, "Agregar contorno", self.add_polygon, admin and self.map.editing)
+        add(maps, "Quitar contorno", self.remove_polygon, admin and self.map.editing)
+        inventory = self.options_menu.addMenu("Inventario")
+        add(inventory, "Abrir inventario", lambda: self.nav.setCurrentRow(3))
+        add(inventory, "Importar bloques Excel / CSV", self.import_inventory, admin)
+        add(inventory, "Exportar bloques y ubicaciones", self.export_inventory)
+        add(inventory, "Plantilla de inventario", lambda: self.export_inventory(template=True))
+        inventory.addSeparator()
+        add(inventory, "Eliminar bloque…", self.choose_delete_block, admin)
+        add(
+            inventory,
+            "Eliminar casillero seleccionado",
+            lambda: self.delete_inventory("locker", self.lookup("lockers", self.selected(self.inventory))),
+            admin and bool(self.selected(self.inventory)),
+        )
+        add(inventory, "Elementos eliminados / restaurar", self.archived_inventory)
+        employees = self.options_menu.addMenu("Empleados")
+        add(employees, "Abrir empleados", lambda: self.nav.setCurrentRow(2))
+        add(employees, "Nuevo empleado", self.employee_form, editor)
+        add(employees, "Importar empleados CSV", self.import_employees, editor)
+        add(employees, "Exportar empleados CSV", lambda: self.export("employees"))
+        add(employees, "Plantilla de empleados CSV", self.template_csv)
+        manage = self.options_menu.addMenu("Administración e historial")
+        add(manage, "Cuentas y permisos", lambda: self.nav.setCurrentRow(6), admin)
+        add(manage, "Edificios", self.buildings_dialog, admin)
+        add(manage, "Avisos a Recursos Humanos", self.mail_settings_form, admin)
+        add(manage, "Crear respaldo", self.backup, admin)
+        add(manage, "Historial de cambios", lambda: self.nav.setCurrentRow(5))
+        add(manage, "Notificaciones de correo", self.notifications)
+        self.options_menu.addSeparator()
+        add(self.options_menu, "Ayuda y versión", self.quick_help)
+        add(self.options_menu, "Cerrar sesión", self.logout)
+
+    def retry_pending(self):
+        if self.worker and self.worker.isRunning():
+            info(self, "Espera a que termine la sincronización actual.")
+            return
+        for item in self.store.queue(self.session["actor"]["id"]):
+            self.store.retry(item["id"], self.session["actor"]["id"])
+        self.refresh_queue()
+        if self.connection_state == "sesion":
+            self.relogin()
+        else:
+            self.sync()
+
+    def connection_info(self):
+        labels = {
+            "online": "Conectado",
+            "offline": "Sin conexión",
+            "sesion": "Requiere iniciar sesión",
+            "error": "Error local",
+            "inicial": "Comprobando conexión",
+        }
+        tasks = self.store.queue(self.session["actor"]["id"])
+        waiting = sum(q["status"] in ("pendiente", "requiere_sesion", "error_temporal") for q in tasks)
+        info(
+            self,
+            f"Estado: {labels.get(self.connection_state, self.connection_state)}\nSolicitudes por enviar o confirmar: {waiting}\nÚltima actualización: {local_date(self.data.get('at'))}\n\nSi la sesión venció, inicia sesión. Las solicitudes conservan su identificador y se reenvían sin duplicar efectos.",
+        )
+
+    def quick_help(self):
+        from . import __version__
+
+        info(
+            self,
+            f"Samtec Lockers {__version__}\n\nMapa: escribe un bloque o casillero y presiona Enter. Un clic apaga el halo azul.\nInventario: crea, importa, elimina o restaura bloques y casilleros.\nSolicitudes: revisa el resultado confirmado de cada operación. Si aparece Requiere sesión, inicia sesión con la cuenta que creó la solicitud.\nNo necesitas repetir una eliminación pendiente.\nAdministración: gestiona cuentas, edificios, avisos a HR y respaldos.",
+        )
+
     def sync(self):
         if self.worker and self.worker.isRunning():
             return
@@ -240,6 +350,7 @@ class Window(QMainWindow):
 
     def synced(self, result):
         self.connection_state = result["state"]
+        self.session_button.setVisible(result["state"] == "sesion")
         if result["state"] == "online":
             self.data = result["snapshot"]
             self.session["actor"] = result["actor"]
@@ -252,6 +363,10 @@ class Window(QMainWindow):
             issues = sum(x["status"] != "confirmada" for x in result.get("changes", []))
             if issues:
                 self.statusBar().showMessage(f"{issues} solicitud(es) requieren revisión. Abre Solicitudes.", 20000)
+            elif result.get("changes"):
+                self.statusBar().showMessage(
+                    f"{len(result['changes'])} solicitud(es) confirmadas por el servidor.", 20000
+                )
         else:
             self.banner.setText(result.get("message", "") + "  Últimos datos: " + local_date(self.data.get("at")))
         self.refresh()
@@ -873,6 +988,18 @@ class Window(QMainWindow):
             return
         if not item:
             info(self, "Selecciona un elemento del inventario.")
+            return
+        if not restore and any(
+            q["command"]["action"] == kind + ".delete"
+            and q["command"]["payload"].get("id") == item["id"]
+            and q["status"] in ("pendiente", "requiere_sesion", "error_temporal")
+            for q in self.store.queue(self.session["actor"]["id"])
+        ):
+            self.nav.setCurrentRow(4)
+            info(
+                self,
+                "Esta eliminación ya está guardada. Inicia sesión si se solicita y sincroniza; no necesitas volver a eliminarla.",
+            )
             return
         children = [
             locker

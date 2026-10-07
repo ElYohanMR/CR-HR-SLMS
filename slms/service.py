@@ -257,7 +257,13 @@ def mutate(db, actor, command):
     elif action in ("block.delete", "locker.delete", "block.restore", "locker.restore"):
         is_block, restoring = action.startswith("block."), action.endswith("restore")
         kind = "block" if is_block else "locker"
-        target = get(db, Block if is_block else Locker, p.get("id"), include_deleted=restoring)
+        target = get(db, Block if is_block else Locker, p.get("id"), include_deleted=True)
+        if target.deleted_at and not restoring:
+            return {
+                "status": "confirmada",
+                "message": "El elemento ya estaba eliminado; no se volvió a modificar.",
+                "target_id": target.id,
+            }
         check_version(target, versions, kind)
         reason = required(p, "reason", 2000)
         if restoring and not target.deleted_at:

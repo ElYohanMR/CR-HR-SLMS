@@ -21,8 +21,12 @@ class SyncWorker(QThread):
             ) as client:
                 identity = client.get("/me")
                 if identity.status_code == 401:
+                    self.store.require_session(self.session["actor"]["id"])
                     self.completed.emit(
-                        {"state": "sesion", "message": "Sesión vencida. Inicia sesión para sincronizar."}
+                        {
+                            "state": "sesion",
+                            "message": "Sesión vencida. Las solicitudes no se enviaron. Inicia sesión para enviarlas automáticamente.",
+                        }
                     )
                     return
                 identity.raise_for_status()
@@ -39,6 +43,7 @@ class SyncWorker(QThread):
                     try:
                         response = client.post("/commands", json=task["command"])
                         if response.status_code == 401:
+                            self.store.require_session(self.session["actor"]["id"])
                             self.store.result(
                                 task["id"], "requiere_sesion", "Inicia sesión con la cuenta que creó esta solicitud."
                             )

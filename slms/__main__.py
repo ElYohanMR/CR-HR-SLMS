@@ -31,7 +31,7 @@ def main():
         )
         return
     from PySide6.QtWidgets import QApplication, QMessageBox
-    from .setup import setup, ensure_server, login, ServerMismatch
+    from .setup import setup, ensure_server, login, ServerMismatch, saved_session_valid
     from .window import Window
     from .theme import apply_theme
 
@@ -61,7 +61,7 @@ def main():
         except ValueError as exc:
             QMessageBox.warning(None, "Servidor", str(exc))
         session = read_private("session.dat")
-        if session and session.get("installation") != config["installation"]:
+        if not saved_session_valid(config, session):
             session = None
         if session is None:
             session = login(config)

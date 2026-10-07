@@ -144,6 +144,16 @@ def run(app):
         window.mail_settings_form()
     finally:
         Form.exec = original_exec
+    window.populate_options()
+    window.options_menu.show()
+    QApplication.processEvents()
+    window.options_menu.grab().save(str(home() / "opciones.png"))
+    window.options_menu.hide()
+    window.synced(
+        {"state": "sesion", "message": "Sesión vencida. Inicia sesión para enviar las solicitudes guardadas."}
+    )
+    QApplication.processEvents()
+    window.grab().save(str(home() / "sesion-vencida.png"))
     window.close()
     engine.dispose()
     (home() / "self-test.json").write_text(

@@ -54,11 +54,27 @@ class LocalStore:
             "versions": versions,
         }
         with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            if action in ("block.delete", "locker.delete"):
+                for existing in db.execute(
+                    "SELECT id,command FROM queue WHERE actor_id=? AND status IN ('pendiente','requiere_sesion','error_temporal')",
+                    (actor_id,),
+                ):
+                    old = self.decode(existing["command"])
+                    if old["action"] == action and old["payload"].get("id") == payload.get("id"):
+                        return existing["id"]
             db.execute(
                 "INSERT INTO queue(id,actor_id,command,status,created_at,dependency) VALUES (?,?,?,?,?,?)",
                 (command["id"], actor_id, self.encode(command), "pendiente", command["client_at"], dependency),
             )
         return command["id"]
+
+    def require_session(self, actor_id):
+        with self.connect() as db:
+            db.execute(
+                "UPDATE queue SET status='requiere_sesion', message=?, next_attempt=0 WHERE actor_id=? AND status IN ('pendiente','requiere_sesion')",
+                ("Inicia sesión con la cuenta que creó esta solicitud para enviarla al servidor.", actor_id),
+            )
 
     def queue(self, actor_id):
         with self.connect() as db:

@@ -49,7 +49,7 @@ def test_connection_lost_after_commit_replays_once(system, tmp_path, monkeypatch
         assert db.scalar(select(func.count()).select_from(Assignment)) == 1
 
 
-def test_expired_session_keeps_pending_and_separates_installations(system, tmp_path, monkeypatch):
+def test_expired_session_marks_login_required_and_separates_installations(system, tmp_path, monkeypatch):
     _, _, session = system
     store = LocalStore(tmp_path / "expired.sqlite3")
     store.enqueue(session["actor"]["id"], "employee.create", {"first_name": "Not sent"}, {})
@@ -65,7 +65,7 @@ def test_expired_session_keeps_pending_and_separates_installations(system, tmp_p
     )
     SyncWorker(store, "http://test", session).run()
     assert calls == ["/me"]
-    assert store.queue(session["actor"]["id"])[0]["status"] == "pendiente"
+    assert store.queue(session["actor"]["id"])[0]["status"] == "requiere_sesion"
     first = LocalStore(installation="server-one")
     second = LocalStore(installation="server-two")
     first.enqueue("actor", "employee.create", {}, {})
