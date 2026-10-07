@@ -2,6 +2,7 @@
 
 import json
 import uuid
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFontDatabase
 from fastapi.testclient import TestClient
@@ -113,11 +114,20 @@ def run(app):
     window.grab().save(str(home() / "mapa-busqueda.png"))
     window.map.stop_highlight()
     window.nav.setCurrentRow(3)
+    window.inventory.sortItems(0, Qt.SortOrder.DescendingOrder)
+    assert window.inventory.item(0, 0).text() == "DEMO-016"
+    window.inventory.selectRow(0)
+    selected_locker = window.selected(window.inventory)
+    window.refresh()
+    assert window.selected(window.inventory) == selected_locker
+    window.inventory.sortItems(0, Qt.SortOrder.AscendingOrder)
+    assert window.inventory.item(0, 0).text() == "DEMO-001"
     QApplication.processEvents()
     window.grab().save(str(home() / "inventario.png"))
     assert window.inventory.rowCount() == 16
     assert window.employees.rowCount() == 1
     window.nav.setCurrentRow(2)
+    window.employees.sortItems(1, Qt.SortOrder.AscendingOrder)
     window.employees.selectRow(0)
     QApplication.processEvents()
     window.grab().save(str(home() / "empleados.png"))

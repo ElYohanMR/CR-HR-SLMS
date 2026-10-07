@@ -1,5 +1,11 @@
 # Guía de operación
 
+## Ordenar las tablas
+
+Haz clic en cualquier encabezado de columna para ordenar sus filas. El primer clic ordena de menor a mayor o de A a Z (▲); otro clic invierte el orden (▼). Funciona en Empleados, Inventario, Solicitudes, Historial, Administración y las listas de consulta e importación.
+
+Los números, códigos y fechas se ordenan por su valor: 2 aparece antes de 10 y N2 antes de N10. Los ID conservan sus ceros iniciales. El orden y la selección se conservan al sincronizar o filtrar mientras el registro seleccionado siga visible. Al cerrar y volver a abrir el programa se recupera el orden inicial de cada lista.
+
 ## Cuentas
 
 El botón **Opciones**, en la cabecera, reúne conexión y solicitudes, mapa, inventario, empleados, administración, respaldos, historial y ayuda. Las acciones que tu cuenta no puede realizar aparecen deshabilitadas.

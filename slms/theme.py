@@ -42,6 +42,9 @@ QComboBox::drop-down { border:0; width:24px; }
 QComboBox::down-arrow { image:url("@CHEVRON@"); width:12px; height:8px; }
 QTableWidget { color:#333333; background:white; alternate-background-color:#f8f8f8; border:1px solid #dddddd; gridline-color:#eeeeee; selection-background-color:#ffddc9; selection-color:#222222; }
 QHeaderView::section { background:#eeeeee; color:#444444; padding:10px; border:0; border-bottom:1px solid #dddddd; font-weight:600; }
+QHeaderView::section:hover { background:#fff1e9; }
+QHeaderView::up-arrow { image:url("@SORT_UP@"); width:12px; height:8px; }
+QHeaderView::down-arrow { image:url("@SORT_DOWN@"); width:12px; height:8px; }
 QTableWidget::item { padding:4px; }
 QTabWidget::pane { background:white; border:1px solid #dddddd; }
 QTabBar::tab { background:#eeeeee; color:#333333; padding:10px 15px; }
@@ -53,7 +56,9 @@ QMenu::item:selected { background:#ffddc9; color:#222222; }
 QCheckBox { color:#333333; spacing:8px; }
 QGroupBox { color:#333333; border:1px solid #dddddd; margin-top:15px; padding:10px; }
 QScrollArea#formScroll { background:transparent; border:0; }
-""".replace("@CHEVRON@", asset("chevron-down.svg").as_posix())
+""".replace("@CHEVRON@", asset("chevron-down.svg").as_posix()).replace(
+    "@SORT_UP@", asset("sort-up.svg").as_posix()
+).replace("@SORT_DOWN@", asset("sort-down.svg").as_posix())
 
 
 def apply_theme(app):

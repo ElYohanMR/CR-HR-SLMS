@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QComboBox,
     QTableWidget,
-    QTableWidgetItem,
     QHeaderView,
     QAbstractItemView,
     QDialog,
@@ -34,6 +33,7 @@ from .sync import SyncWorker
 from .mapview import MapView
 from .setup import login
 from .theme import STYLE, brand_header
+from .tableview import enable_sorting, fill_table
 
 
 STATES = {
@@ -199,19 +199,12 @@ class Window(QMainWindow):
         table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table.verticalHeader().setVisible(False)
+        enable_sorting(table)
         layout.addWidget(table, 1)
         return table
 
     def fill(self, table, rows):
-        selected = self.selected(table)
-        table.setRowCount(len(rows))
-        for row, (key, values) in enumerate(rows):
-            for col, value in enumerate(values):
-                item = QTableWidgetItem(str(value if value is not None else ""))
-                item.setData(Qt.ItemDataRole.UserRole, key)
-                table.setItem(row, col, item)
-            if key == selected:
-                table.selectRow(row)
+        fill_table(table, rows)
 
     def selected(self, table):
         row = table.currentRow()

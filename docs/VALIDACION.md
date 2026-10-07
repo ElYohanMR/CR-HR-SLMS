@@ -1,5 +1,14 @@
 # Validación de la entrega
 
+## Versión 1.6 · 7 de octubre de 2026
+
+- Orden por cualquier columna en todas las tablas, incluyendo consultas e importaciones. Clic ascendente/descendente y flecha visible en el encabezado.
+- Comparación numérica sin perder ceros iniciales ni precisión en ID largos, códigos con orden natural, nombres en español y fechas en orden cronológico.
+- La actualización completa cada fila antes de ordenar; conserva el orden elegido y la selección por identificador. Si un filtro elimina la fila seleccionada, se limpia la selección para evitar acciones sobre otro registro.
+- 67 pruebas pasan en SQLite e interfaz Qt, incluyendo 8 nuevas pruebas de ordenación, clics en encabezados, actualización y selección. Revisión estática sin errores y revisión visual del inventario ordenado.
+- Ejecutable independiente verificado en un perfil temporal: ordenación ascendente/descendente, selección tras refrescar, flecha visible, servidor, autenticación, baja atómica y aviso simulado único.
+- Esta versión cambia la presentación de las tablas; no modifica el esquema ni las operaciones de la base de datos.
+
 ## Versión 1.5 · 7 de octubre de 2026
 
 - Diagnóstico: la sesión local guardada recibía HTTP 401 y las dos eliminaciones seguían con cero intentos. El servidor estaba disponible; no era un fallo de eliminación ni de PostgreSQL.
