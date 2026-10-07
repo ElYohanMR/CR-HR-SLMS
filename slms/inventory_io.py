@@ -233,6 +233,8 @@ def prepare_import(rows, snapshot):
         if not n or len(n) > 40 or n in seen_numbers or cell in group["cells"]:
             error("número vacío, demasiado largo, duplicado o posición repetida.")
         current = lockers.get(n)
+        if any(item["number"] == n for item in snapshot.get("archived_lockers", [])):
+            error("ese número está eliminado y reservado. Usa Elementos eliminados para restaurarlo.")
         if existing:
             if not current or (current["block_id"], current["row"], current["column"]) != (existing["id"], *cell):
                 error(
@@ -245,7 +247,13 @@ def prepare_import(rows, snapshot):
     operations, versions = [], {}
     for group in groups.values():
         p, version = group["metadata"]
-        if len(group["cells"]) != p["rows"] * p["columns"]:
+        existing = group["existing"]
+        expected = (
+            sum(locker["block_id"] == existing["id"] for locker in lockers.values())
+            if existing
+            else p["rows"] * p["columns"]
+        )
+        if len(group["cells"]) != expected:
             raise ValueError(f"Bloque {p['label']}: incluye todos sus casilleros, una fila por posición.")
         existing = group["existing"]
         if existing:
@@ -257,6 +265,7 @@ def prepare_import(rows, snapshot):
             operations.append({"action": "block.create", "payload": p})
     # Catch final name collisions before queuing anything.
     final = {b["id"]: (b["building_id"], b["location"], b["label"]) for b in blocks.values()}
+    final.update({b["id"]: (b["building_id"], b["location"], b["label"]) for b in snapshot.get("archived_blocks", [])})
     for index, op in enumerate(operations):
         p = op["payload"]
         final[p.get("id", f"new-{index}")] = (p["building_id"], p["location"], p["label"])

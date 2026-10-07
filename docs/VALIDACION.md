@@ -1,5 +1,15 @@
 # Validación de la entrega
 
+## Versión 1.4 · 7 de octubre de 2026
+
+- 55 pruebas pasan en un clúster PostgreSQL temporal independiente, incluyendo respaldo/restauración y la migración 0003. En SQLite pasan las pruebas anteriores y las nuevas de eliminación, restauración y búsqueda; una prueba adicional verifica búsqueda entre planos, códigos ambiguos y resultados ausentes.
+- Eliminar inventario requiere Administración y un motivo. Se rechazan elementos ocupados y versiones antiguas. La eliminación de un bloque es atómica y conserva empleados, asignaciones históricas y auditoría.
+- Restaurar un bloque recupera solo los casilleros eliminados junto a él; los casilleros restaurados quedan pendientes de revisión. Los códigos eliminados permanecen reservados. Excel puede exportar/reimportar bloques a los que se quitaron casilleros.
+- Creación: 4 filas y 3 columnas predeterminadas, editables. No se alteran dimensiones existentes.
+- Etiquetas con un quinto del ancho y alto anteriores. Búsqueda con Enter por bloque, número físico o código completo; selección ante códigos ambiguos y cambio de plano automático.
+- Halo azul exterior con transición de un segundo para aparecer y otro para atenuarse; conserva colores de estado y continúa tras sincronizar. Se apaga al seleccionar un bloque.
+- Respaldo PostgreSQL previo a actualizar la base configurada. Se verificaron los recuentos de bloques, casilleros, empleados y asignaciones antes y después; no se eliminó inventario real durante el desarrollo.
+
 ## Versión 1.3 · 6 de octubre de 2026
 
 - 51 pruebas pasan con SQLite. En PostgreSQL, 50 pasan en esquemas temporales; la prueba restante de respaldo/restauración pasa en un clúster temporal independiente. La cuenta de aplicación no tiene permiso para crear bases, por lo que esa prueba se trasladó al clúster de pruebas sin elevar sus permisos.

@@ -53,6 +53,10 @@ ACTIONS = {
     "locker.update": "Actualizar casillero",
     "block.create": "Crear bloque",
     "block.update": "Mover / actualizar bloque",
+    "block.delete": "Eliminar bloque",
+    "locker.delete": "Eliminar casillero",
+    "block.restore": "Restaurar bloque",
+    "locker.restore": "Restaurar casillero",
     "inventory.import": "Importar inventario de bloques",
     "plan.create": "Crear plano",
     "plan.update": "Actualizar plano",
@@ -204,7 +208,7 @@ class Window(QMainWindow):
 
     def lookup(self, kind, id):
         return getattr(self, "indexes", {}).get(kind, {}).get(id) or next(
-            (x for x in self.data[kind] if x["id"] == id), None
+            (x for x in self.data.get(kind, []) + self.data.get("archived_" + kind, []) if x["id"] == id), None
         )
 
     def versions(self, *items):
@@ -333,6 +337,13 @@ class Window(QMainWindow):
         self.button(row, "Quitar contorno", self.remove_polygon)
         layout.addLayout(row)
         self.map = MapView()
+        search_row = QHBoxLayout()
+        self.map_search = QLineEdit()
+        self.map_search.setPlaceholderText("Código del bloque o número de casillero · Enter para buscar")
+        self.map_search.returnPressed.connect(self.search_map)
+        search_row.addWidget(self.map_search, 1)
+        self.button(search_row, "Buscar en el mapa", self.search_map)
+        layout.addLayout(search_row)
         self.map.blockOpened.connect(self.open_block)
         self.map.assignmentsOpened.connect(self.block_assignments)
         layout.addWidget(self.map, 1)
@@ -347,6 +358,49 @@ class Window(QMainWindow):
             return
         self.map.render(self.data, self.plan_combo.currentData())
         self.map.fit()
+
+    def search_map(self):
+        query = self.map_search.text().strip().casefold()
+        if not query:
+            return
+        if self.map.editing and (self.map.dirty or (self.map.plan and self.map.shapes != self.map.plan["polygons"])):
+            info(self, "Guarda las posiciones antes de buscar en otro lugar del mapa.")
+            return
+        matches = {}
+        for block in self.data["blocks"]:
+            building = self.lookup("buildings", block["building_id"]) or {}
+            codes = (block["label"], f"{building.get('code', '')}-{block['location']}-{block['label']}")
+            if query in [code.casefold() for code in codes]:
+                matches[block["id"]] = block
+        for locker in self.data["lockers"]:
+            if query in (locker["number"].casefold(), self.locker_code(locker).casefold()):
+                block = self.lookup("blocks", locker["block_id"])
+                if block:
+                    matches[block["id"]] = block
+        if not matches:
+            self.map.stop_highlight()
+            info(self, "No se encontró ese bloque o casillero. Escribe su código o número completo.")
+            return
+        if len(matches) > 1:
+            choices = []
+            for block in matches.values():
+                building = self.lookup("buildings", block["building_id"]) or {}
+                plan = self.lookup("plans", block["plan_id"]) or {}
+                choices.append((f"{building.get('code', '')} · {block['label']} · {plan.get('name', '')}", block["id"]))
+            form = Form("Selecciona el bloque", [("id", "Coincidencias", choices)], parent=self)
+            if form.exec() != QDialog.DialogCode.Accepted:
+                return
+            block = matches[form.values()["id"]]
+        else:
+            block = next(iter(matches.values()))
+        self.edit_map.setChecked(False)
+        self.consult_map.setChecked(True)
+        self.map.set_editing(False)
+        self.plan_combo.setCurrentIndex(self.plan_combo.findData(block["plan_id"]))
+        self.map.start_highlight(block["id"], focus=True)
+        self.statusBar().showMessage(
+            f"Encontrado en {block['label']}. Selecciona el bloque para apagar la luz azul.", 12000
+        )
 
     def toggle_map(self):
         if self.session["actor"]["role"] != "admin":
@@ -524,7 +578,7 @@ class Window(QMainWindow):
             "Editar bloque" if block else "Nuevo bloque",
             fields,
             block
-            or {"x": 500, "y": 500, "rows": 4, "columns": 4, "label": "S01", "plan_id": self.plan_combo.currentData()},
+            or {"x": 500, "y": 500, "rows": 4, "columns": 3, "label": "S01", "plan_id": self.plan_combo.currentData()},
             self,
             description="Los casilleros nuevos quedan pendientes de verificación física. La numeración se recorre por filas, de izquierda a derecha.",
         )
@@ -576,6 +630,7 @@ class Window(QMainWindow):
             )
             grid.addWidget(button, locker["row"], locker["column"])
         self.button(layout, "Editar nombre / posición", lambda: (dialog.accept(), self.block_form(block)))
+        self.button(layout, "Eliminar bloque", lambda: (dialog.accept(), self.delete_inventory("block", block)))
         self.button(
             layout, "Confirmar verificación física del bloque", lambda: (dialog.accept(), self.verify_block(block))
         )
@@ -786,10 +841,116 @@ class Window(QMainWindow):
         self.button(row, "Exportar bloques y ubicaciones", self.export_inventory)
         self.button(row, "Plantilla de inventario", lambda: self.export_inventory(template=True))
         layout.addLayout(row)
+        row = QHBoxLayout()
+        self.button(
+            row,
+            "Eliminar casillero seleccionado",
+            lambda: self.delete_inventory("locker", self.lookup("lockers", self.selected(self.inventory))),
+        )
+        self.button(row, "Eliminar bloque…", self.choose_delete_block)
+        self.button(row, "Elementos eliminados", self.archived_inventory)
+        layout.addLayout(row)
         self.inventory = self.table(layout, ["Número", "Ubicación", "Estado", "Empleado", "Fila / columna"])
         self.locker_search.textChanged.connect(self.refresh_inventory)
         self.inventory_filter.currentIndexChanged.connect(self.refresh_inventory)
         self.inventory.cellDoubleClicked.connect(lambda r, c: self.locker_dialog(self.selected(self.inventory)))
+
+    def choose_delete_block(self):
+        choices = [
+            (f"{(self.lookup('buildings', b['building_id']) or {}).get('code', '')} · {b['label']}", b["id"])
+            for b in self.data["blocks"]
+        ]
+        if not choices:
+            info(self, "No hay bloques en el inventario.")
+            return
+        form = Form("Eliminar bloque", [("id", "Bloque", choices)], parent=self)
+        if form.exec() == QDialog.DialogCode.Accepted:
+            self.delete_inventory("block", self.lookup("blocks", form.values()["id"]))
+
+    def delete_inventory(self, kind, item, restore=False):
+        if self.session["actor"]["role"] != "admin":
+            info(self, "Solo Administración puede eliminar o restaurar inventario.")
+            return
+        if not item:
+            info(self, "Selecciona un elemento del inventario.")
+            return
+        children = [
+            locker
+            for locker in self.data.get("archived_lockers" if restore else "lockers", [])
+            if kind == "block"
+            and locker["block_id"] == item["id"]
+            and (not restore or locker.get("deleted_at") == item.get("deleted_at"))
+        ]
+        if any(self.assignment_for(locker_id=locker["id"]) for locker in (children if kind == "block" else [item])):
+            info(self, "Primero libera las asignaciones activas. No se eliminó ningún elemento.")
+            return
+        label = item["label"] if kind == "block" else item["number"]
+        verb = "Restaurar" if restore else "Eliminar"
+        description = (
+            f"{label}: "
+            + (f"incluye {len(children)} casilleros. " if kind == "block" else "")
+            + (
+                "Volverá al inventario; los casilleros deberán verificarse físicamente."
+                if restore
+                else "Se quitará del mapa y del inventario. Se conserva el historial. El código queda reservado; puedes recuperarlo en Elementos eliminados."
+            )
+        )
+        form = Form(
+            verb + (" bloque" if kind == "block" else " casillero"),
+            [("reason", "Motivo", "text")],
+            parent=self,
+            description=description,
+            accept_label=verb,
+        )
+        if form.exec() == QDialog.DialogCode.Accepted:
+            reason = form.values()["reason"].strip()
+            if not reason:
+                info(self, "Escribe el motivo de la operación.")
+                return
+            self.submit(
+                kind + (".restore" if restore else ".delete"),
+                {"id": item["id"], "reason": reason},
+                self.versions((kind, item), *[("locker", locker) for locker in children]),
+            )
+
+    def archived_inventory(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Elementos eliminados")
+        dialog.resize(800, 480)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(
+            QLabel("El historial y los códigos se conservan. Restaura primero el bloque si también fue eliminado.")
+        )
+        table = self.table(layout, ["Tipo", "Código", "Eliminado el"])
+        items = {
+            kind + ":" + item["id"]: (kind, item)
+            for kind, group in [("block", "archived_blocks"), ("locker", "archived_lockers")]
+            for item in self.data.get(group, [])
+        }
+        self.fill(
+            table,
+            [
+                (
+                    key,
+                    [
+                        "Bloque" if kind == "block" else "Casillero",
+                        item.get("label", item.get("number")),
+                        local_date(item["deleted_at"]),
+                    ],
+                )
+                for key, (kind, item) in items.items()
+            ],
+        )
+
+        def restore_selected():
+            selected = items.get(self.selected(table))
+            if selected:
+                dialog.accept()
+                self.delete_inventory(*selected, restore=True)
+
+        self.button(layout, "Restaurar seleccionado", restore_selected)
+        self.button(layout, "Cerrar", dialog.reject)
+        dialog.exec()
 
     def export_inventory(self, checked=False, template=False):
         from .inventory_io import write_inventory, export_rows
@@ -903,6 +1064,9 @@ class Window(QMainWindow):
             self.button(form.layout(), "Liberar casillero", lambda: (form.reject(), self.release(assignment)))
         elif locker["condition"] == "utilizable":
             self.button(form.layout(), "Asignar a una persona", lambda: (form.reject(), self.choose_person(locker)))
+        self.button(
+            form.layout(), "Eliminar casillero", lambda: (form.reject(), self.delete_inventory("locker", locker))
+        )
         history = [a for a in self.data["assignments"] if a["locker_id"] == id]
         if history:
             text = "\n".join(

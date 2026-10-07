@@ -65,6 +65,7 @@ class Block(Entity, Base):
     x: Mapped[float] = mapped_column(Float, default=500)
     y: Mapped[float] = mapped_column(Float, default=500)
     rotation: Mapped[float] = mapped_column(Float, default=0)
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     __table_args__ = (Index("uq_block_label", "building_id", "location", "label", unique=True),)
 
 
@@ -76,6 +77,7 @@ class Locker(Entity, Base):
     column: Mapped[int] = mapped_column(Integer)
     condition: Mapped[str] = mapped_column(String(20), default="pendiente")
     notes: Mapped[str] = mapped_column(Text, default="")
+    deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     __table_args__ = (Index("uq_locker_cell", "block_id", "row", "column", unique=True),)
 
 

@@ -10,6 +10,7 @@ from .config import home
 from .database import engine_for, initialize
 from .local import LocalStore
 from .window import Window
+from .models import now
 
 
 def run(app):
@@ -52,8 +53,6 @@ def run(app):
         snapshot = client.get("/snapshot").json()
         if not any(a["ended_at"] is None for a in snapshot["assignments"]):
             employee, locker = snapshot["employees"][0], snapshot["lockers"][0]
-            from .models import now
-
             result = client.post(
                 "/commands",
                 json={
@@ -107,6 +106,12 @@ def run(app):
     QApplication.processEvents()
     window.grab().save(str(home() / "mapa-consulta.png"))
     window.map.hide_card()
+    window.map_search.setText(snapshot["lockers"][0]["number"])
+    window.search_map()
+    window.map.pulse.setCurrentTime(1000)
+    QApplication.processEvents()
+    window.grab().save(str(home() / "mapa-busqueda.png"))
+    window.map.stop_highlight()
     window.nav.setCurrentRow(3)
     QApplication.processEvents()
     window.grab().save(str(home() / "inventario.png"))

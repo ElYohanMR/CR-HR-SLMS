@@ -38,9 +38,9 @@ def required(data, key, maxlen=200):
     return value
 
 
-def get(db, model, key):
+def get(db, model, key, include_deleted=False):
     item = db.get(model, key)
-    if item is None:
+    if item is None or (getattr(item, "deleted_at", None) and not include_deleted):
         raise RuleError("El registro ya no existe. Actualiza la información.", "conflicto")
     return item
 
@@ -73,6 +73,8 @@ def mutate(db, actor, command):
     admin_actions = ("building.", "plan.", "block.", "admin.", "mail_settings.", "inventory.")
     if actor.role == "viewer" or (action.startswith(admin_actions) and actor.role != "admin"):
         raise RuleError("Tu cuenta no tiene permiso para esta operación.")
+    if action in ("locker.delete", "locker.restore") and actor.role != "admin":
+        raise RuleError("Solo Administración puede eliminar o restaurar inventario.")
     if action == "inventory.import":
         operations = p.get("operations")
         if not isinstance(operations, list) or not 1 <= len(operations) <= 2000:
@@ -226,7 +228,7 @@ def mutate(db, actor, command):
         get(db, Plan, p.get("plan_id"))
         get(db, Building, p.get("building_id"))
         rows = int(numeric(p, "rows", 1, 12, 4))
-        cols = int(numeric(p, "columns", 1, 12, 4))
+        cols = int(numeric(p, "columns", 1, 12, 3))
         numbers = p.get("numbers", [])
         if (
             len(numbers) != rows * cols
@@ -252,6 +254,56 @@ def mutate(db, actor, command):
         db.flush()
         for i, number in enumerate(numbers):
             db.add(Locker(block_id=target.id, number=number.strip(), row=i // cols, column=i % cols))
+    elif action in ("block.delete", "locker.delete", "block.restore", "locker.restore"):
+        is_block, restoring = action.startswith("block."), action.endswith("restore")
+        kind = "block" if is_block else "locker"
+        target = get(db, Block if is_block else Locker, p.get("id"), include_deleted=restoring)
+        check_version(target, versions, kind)
+        reason = required(p, "reason", 2000)
+        if restoring and not target.deleted_at:
+            raise RuleError("Este elemento ya está en el inventario.", "conflicto")
+        before = record(target)
+        if is_block:
+            query = select(Locker).where(Locker.block_id == target.id)
+            query = (
+                query.where(Locker.deleted_at == target.deleted_at)
+                if restoring
+                else query.where(Locker.deleted_at.is_(None))
+            )
+            children = list(db.scalars(query))
+            for locker in children:
+                check_version(locker, versions, "locker")
+                if active_assignment(db, locker_id=locker.id):
+                    raise RuleError("Libera las asignaciones activas antes de eliminar el bloque.", "conflicto")
+        else:
+            get(db, Block, target.block_id)
+            children = []
+            if active_assignment(db, locker_id=target.id):
+                raise RuleError("Libera la asignación activa antes de eliminar el casillero.", "conflicto")
+        stamp = None if restoring else now()
+        for locker in children:
+            old = record(locker)
+            locker.deleted_at = stamp
+            if restoring:
+                locker.condition = "pendiente"
+            locker.version += 1
+            db.add(
+                Audit(
+                    command_id=command["id"],
+                    actor_id=actor.id,
+                    action="locker.restore" if restoring else "locker.delete",
+                    target_id=locker.id,
+                    before=old,
+                    after=record(locker),
+                    reason=reason,
+                )
+            )
+        target.deleted_at = stamp
+        if restoring and not is_block:
+            target.condition = "pendiente"
+        if not is_block:
+            # Invalidate a block removal prepared before this membership change.
+            get(db, Block, target.block_id).version += 1
     elif action == "block.update":
         target = get(db, Block, p.get("id"))
         check_version(target, versions, "block")
@@ -262,7 +314,13 @@ def mutate(db, actor, command):
     elif action == "lockers.verify":
         target = get(db, Block, p.get("block_id"))
         check_version(target, versions, "block")
-        pending = list(db.scalars(select(Locker).where(Locker.block_id == target.id, Locker.condition == "pendiente")))
+        pending = list(
+            db.scalars(
+                select(Locker).where(
+                    Locker.block_id == target.id, Locker.condition == "pendiente", Locker.deleted_at.is_(None)
+                )
+            )
+        )
         if not pending:
             raise RuleError("No hay casilleros pendientes de verificar en este bloque.", "conflicto")
         before = {"pending_count": len(pending)}

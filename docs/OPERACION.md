@@ -24,6 +24,14 @@ Si falta un correo se registra Falta destinatario o Simulado · falta correo HR;
 
 ## Inventario y mapa
 
+Los bloques nuevos proponen **4 filas × 3 columnas (12 casilleros)**. Puedes cambiar ambos valores antes de crearlos. Los bloques ya registrados conservan sus dimensiones.
+
+En el mapa escribe el **código completo del bloque o número de casillero** y presiona **Enter**. También puedes usar el código completo de ubicación. La búsqueda incluye todos los planos y permite elegir si un código corresponde a varios bloques. El mapa centra el resultado y muestra un halo azul exterior que sube y baja de intensidad, un segundo por transición. Los colores de disponibilidad se mantienen; seleccionar un bloque apaga la animación. Las etiquetas miden una quinta parte de su ancho y alto anteriores a igual acercamiento.
+
+En **Inventario** están **Eliminar casillero seleccionado**, **Eliminar bloque…** y **Elementos eliminados**. También puedes eliminar desde la ficha del casillero o la cuadrícula del bloque. Solo Administración puede hacerlo; indica un motivo. Eliminar un bloque quita también sus casilleros. Primero deben liberarse todas sus asignaciones activas. Los cambios se confirman en Solicitudes y una versión desactualizada produce un conflicto sin eliminación parcial.
+
+La eliminación conserva historial, responsable y fecha, pero oculta el elemento del mapa y del inventario. Sus códigos permanecen reservados. **Elementos eliminados → Restaurar seleccionado** permite recuperarlo; restaura primero su bloque si también fue eliminado. Los casilleros restaurados quedan pendientes de verificación y no recuperan antiguas asignaciones. Restaurar un bloque no restaura casilleros eliminados individualmente antes de eliminar ese bloque.
+
 Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, por filas de izquierda a derecha. También puedes generar una secuencia desde un primer número.
 
 Los números físicos deben ser únicos en esta instalación. Si se repiten entre edificios, establece primero una convención que los distinga.

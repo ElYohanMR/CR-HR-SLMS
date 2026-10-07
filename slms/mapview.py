@@ -1,7 +1,7 @@
 import base64
 import copy
 import math
-from PySide6.QtCore import Qt, QPointF, Signal
+from PySide6.QtCore import Qt, QPointF, Signal, QVariantAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QPen, QColor, QBrush, QPolygonF, QFont, QPainter
 from PySide6.QtWidgets import (
     QGraphicsView,
@@ -57,8 +57,17 @@ class BlockItem(QGraphicsRectItem):
             f"{block['label']} · {status}\nAcerca el mapa para leer etiquetas próximas. Clic para consultar."
         )
         self.setZValue(5)
+        self.halo = QGraphicsRectItem(self.rect().adjusted(-size * 0.3, -size * 0.3, size * 0.3, size * 0.3), self)
+        halo_pen = QPen(QColor("#1685ff"), 3)
+        halo_pen.setCosmetic(True)
+        self.halo.setPen(halo_pen)
+        self.halo.setBrush(Qt.BrushStyle.NoBrush)
+        self.halo.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+        self.halo.hide()
 
     def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.view.stop_highlight()
         if not self.view.editing and event.button() == Qt.MouseButton.LeftButton:
             event.accept()
         else:
@@ -115,6 +124,15 @@ class MapView(QGraphicsView):
         self.plan = None
         self.selected_block = None
         self.details = {}
+        self.highlighted_block = None
+        self.pulse = QVariantAnimation(self)
+        self.pulse.setDuration(2000)
+        self.pulse.setStartValue(0.12)
+        self.pulse.setKeyValueAt(0.5, 1.0)
+        self.pulse.setEndValue(0.12)
+        self.pulse.setLoopCount(-1)
+        self.pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.pulse.valueChanged.connect(self.paint_highlight)
         self.card = QFrame(self.viewport())
         self.card.setObjectName("blockCard")
         self.card.setStyleSheet("#blockCard { background: white; border: 2px solid #555; border-radius: 5px; }")
@@ -162,6 +180,8 @@ class MapView(QGraphicsView):
         self.card.raise_()
 
     def render(self, snapshot, plan_id):
+        highlighted = self.highlighted_block if self.plan and self.plan["id"] == plan_id else None
+        self.stop_highlight()
         selected = self.selected_block if self.plan and self.plan["id"] == plan_id else None
         self.hide_card()
         self.scene().clear()
@@ -222,13 +242,44 @@ class MapView(QGraphicsView):
                 if other["id"] != block["id"]
             ]
             size = min(14, min(distances, default=100) * 0.6)
-            size = max(1, size)
+            size = max(1, size) / 5
             item = BlockItem(block, color, status, size, self)
             self.scene().addItem(item)
             self.block_items.append(item)
         self.set_editing(self.editing)
         if selected:
             self.show_card(selected)
+        if highlighted:
+            self.start_highlight(highlighted)
+
+    def paint_highlight(self, opacity):
+        for item in self.block_items:
+            if item.data["id"] == self.highlighted_block:
+                margin = 5 / max(self.transform().m11(), 0.01)
+                item.halo.setRect(item.rect().adjusted(-margin, -margin, margin, margin))
+                item.halo.setOpacity(float(opacity))
+
+    def stop_highlight(self):
+        self.pulse.stop()
+        self.highlighted_block = None
+        for item in self.block_items:
+            item.halo.hide()
+            item.setZValue(5)
+
+    def start_highlight(self, block_id, focus=False):
+        self.stop_highlight()
+        item = next((item for item in self.block_items if item.data["id"] == block_id), None)
+        if item is None:
+            return
+        self.highlighted_block = block_id
+        item.halo.show()
+        item.setZValue(20)
+        self.pulse.start()
+        if focus:
+            self.hide_card()
+            desired = max(self.transform().m11(), min(32, 24 / item.rect().width()))
+            self.scale(desired / self.transform().m11(), desired / self.transform().m11())
+            self.centerOn(item.pos())
 
     def set_editing(self, value):
         self.editing = value

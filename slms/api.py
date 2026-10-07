@@ -152,7 +152,11 @@ def create_app(engine, installation="test", demo=False):
                 query = select(model)
                 if name in ("audit", "notifications"):
                     query = query.order_by(model.at.desc()).limit(2000)
-                result[name] = [record(item) for item in db.scalars(query)]
+                items = [record(item) for item in db.scalars(query)]
+                if name in ("blocks", "lockers"):
+                    result["archived_" + name] = [item for item in items if item.get("deleted_at")]
+                    items = [item for item in items if not item.get("deleted_at")]
+                result[name] = items
             return result
 
     @app.post("/commands")
