@@ -248,7 +248,7 @@ class Workflows:
             fields,
             {"count": 4, "prefix": "N", "first_label": "01", "rows": 4, "columns": 3},
             self,
-            description="Los bloques se distribuyen del primer punto al segundo. Casilleros de derecha a izquierda y de arriba hacia abajo. Primero verás una vista previa.",
+            description="Los bloques se distribuyen entre ambos puntos. Los existentes conservan su numeración y lado registrado; restaura primero los eliminados. El lado elegido se aplica a los nuevos. Numeración de derecha a izquierda y de arriba hacia abajo.",
             accept_label="Vista previa",
         )
         form.widgets["count"].setRange(1, 200)
@@ -262,22 +262,38 @@ class Workflows:
             preview.setWindowTitle("Revisar fila antes de crear")
             preview.resize(1000, 700)
             layout = QVBoxLayout(preview)
-            layout.addWidget(
-                QLabel(
-                    f"{len(operations)} bloques · {sum(len(op['payload']['numbers']) for op in operations)} casilleros. Se creará todo o nada."
-                )
+            summary = QLabel(
+                f"{len(operations)} bloques · "
+                f"{sum(op['action'] == 'block.create' for op in operations)} nuevos · "
+                f"{sum(op['action'] == 'block.update' for op in operations)} existentes a reubicar. "
+                "Se aplicará todo o nada; se conserva la numeración y el lado de los existentes."
             )
+            summary.setWordWrap(True)
+            layout.addWidget(summary)
             data = copy.deepcopy(self.data)
+            moved = {op["payload"].get("id") for op in operations if op["action"] == "block.update"}
+            data["blocks"] = [b for b in data["blocks"] if b["id"] not in moved]
             for i, op in enumerate(operations):
-                data["blocks"].append(dict(op["payload"], id=f"preview-row-{i}", version=1))
+                data["blocks"].append(dict(op["payload"], id=op["payload"].get("id", f"preview-row-{i}"), version=1))
             view = MapView()
             view.render(data, plan_id)
             layout.addWidget(view, 2)
-            table = self.table(layout, ["Bloque", "Desde", "Hasta", "X", "Y"])
+            table = self.table(layout, ["Bloque", "Acción", "Lado", "Desde", "Hasta", "X", "Y"])
             self.fill(
                 table,
                 [
-                    (str(i), [p["label"], p["numbers"][0], p["numbers"][-1], p["x"], p["y"]])
+                    (
+                        str(i),
+                        [
+                            p["label"],
+                            "Reubicar" if op["action"] == "block.update" else "Crear",
+                            {"N": "Norte", "S": "Sur", "E": "Este", "O": "Oeste"}[p["side"]],
+                            p["numbers"][0],
+                            p["numbers"][-1],
+                            p["x"],
+                            p["y"],
+                        ],
+                    )
                     for i, op in enumerate(operations)
                     for p in [op["payload"]]
                 ],
@@ -288,7 +304,8 @@ class Workflows:
             self.button(actions, "Volver a editar", preview.reject)
             QTimer.singleShot(0, view.fit)
             if preview.exec() == QDialog.DialogCode.Accepted:
-                self.submit("inventory.import", {"operations": operations}, {})
+                versions = {key: value for op in operations for key, value in op.get("versions", {}).items()}
+                self.submit("inventory.import", {"operations": operations}, versions)
                 return
 
     def inspections_dialog(self):

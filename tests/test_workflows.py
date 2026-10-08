@@ -65,10 +65,85 @@ def test_row_validation_reserves_archived_names_and_numbers(system):
         plan_row(data, "campus", (0, 0), (100, 100), values)
     data["archived_lockers"] = []
     data["archived_blocks"] = [dict(building_id=values["building_id"], location="EXT", label="e01")]
-    with pytest.raises(ValueError, match="ya existe"):
+    with pytest.raises(ValueError, match="Elementos eliminados / restaurar"):
         plan_row(data, "campus", (0, 0), (100, 100), values)
     with pytest.raises(ValueError, match="diferentes"):
         plan_row(data, "campus", (100, 100), (100, 100), values)
+
+
+def test_restored_blocks_rejoin_row_without_losing_identity_or_history(system):
+    from test_inventory_removal import removal
+
+    _, client, _ = system
+    initial = client.get("/snapshot").json()
+    values = row_values(initial, 5)
+    operations = plan_row(initial, "campus", (500, 100), (500, 500), values)
+    assert (
+        client.post("/commands", json=cmd("inventory.import", {"operations": operations})).json()["status"]
+        == "confirmada"
+    )
+    created = client.get("/snapshot").json()
+    # A pre-existing side label is not rewritten just by arranging a row.
+    from sqlalchemy.orm import Session
+    from slms.models import Block
+
+    with Session(system[0]) as db:
+        block = next(b for b in created["blocks"] if b["label"] == "E03")
+        db.get(Block, block["id"]).side = "N"
+        db.commit()
+    created = client.get("/snapshot").json()
+    blocks = [b for b in created["blocks"] if b["label"].startswith("E")]
+    for block in blocks:
+        assert client.post("/commands", json=removal(created, "block", block)).json()["status"] == "confirmada"
+    archived = client.get("/snapshot").json()
+    with pytest.raises(ValueError, match="No necesitas borrar el historial"):
+        plan_row(archived, "campus", (700, 200), (700, 900), dict(values, count=8))
+    for block in archived["archived_blocks"]:
+        assert client.post("/commands", json=removal(archived, "block", block, True)).json()["status"] == "confirmada"
+    restored = client.get("/snapshot").json()
+    operations = plan_row(restored, "campus", (700, 200), (700, 900), dict(values, count=8))
+    assert [op["action"] for op in operations] == ["block.update"] * 5 + ["block.create"] * 3
+    versions = {key: value for op in operations for key, value in op["versions"].items()}
+    command = cmd("inventory.import", {"operations": operations}, versions)
+    assert client.post("/commands", json=command).json()["status"] == "confirmada"
+    result = client.get("/snapshot").json()
+    assert {b["id"] for b in blocks} <= {b["id"] for b in result["blocks"]}
+    assert {x["id"] for x in created["lockers"]} <= {x["id"] for x in result["lockers"]}
+    assert {x["id"] for x in restored["audit"]} <= {x["id"] for x in result["audit"]}
+    assert len(result["lockers"]) == len(created["lockers"]) + 36
+    assert next(b for b in result["blocks"] if b["label"] == "E03")["side"] == "N"
+    # Reapplying an obsolete row cannot move its existing blocks or create a partial row.
+    command["id"] = cmd("", {})["id"]
+    assert client.post("/commands", json=command).json()["status"] == "conflicto"
+    assert len(client.get("/snapshot").json()["lockers"]) == len(result["lockers"])
+    with pytest.raises(ValueError, match="numeración"):
+        plan_row(result, "campus", (700, 200), (700, 900), dict(values, first_number="800000"))
+    with pytest.raises(ValueError, match="dimensiones"):
+        plan_row(result, "campus", (700, 200), (700, 900), dict(values, rows=3))
+
+
+def test_row_preview_submits_versions_for_existing_blocks(window, monkeypatch):
+    block = window.data["blocks"][0]
+    # Demo is 4x4 and its numbers use a prefix; supply a synthetic numeric sequence
+    # in this isolated UI fixture to exercise the actual preview/save path.
+    block.update(label="N01", side="N")
+    lockers = sorted(window.data["lockers"], key=lambda x: (x["row"], x["column"]))
+    for i, locker in enumerate(lockers):
+        locker["number"] = str(1000 + i)
+
+    def form_exec(form):
+        form.widgets["count"].setValue(2)
+        form.widgets["columns"].setValue(4)
+        form.widgets["first_number"].setText("1000")
+        form.widgets["building_id"].setCurrentIndex(form.widgets["building_id"].findData(block["building_id"]))
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(Form, "exec", form_exec)
+    monkeypatch.setattr(QDialog, "exec", lambda dialog: QDialog.DialogCode.Accepted)
+    window.create_block_row((100, 100), (500, 500))
+    command = window.store.queue(window.session["actor"]["id"])[0]["command"]
+    assert command["versions"] == version("block", block)
+    assert [op["action"] for op in command["payload"]["operations"]] == ["block.update", "block.create"]
 
 
 def start_round(client, lockers):

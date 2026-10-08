@@ -25,31 +25,70 @@ def plan_row(snapshot, plan_id, start, end, values):
         raise ValueError("El inicio del nombre y del número debe contener solo dígitos.")
     if len(first_label) > 10 or len(first_number) > 40:
         raise ValueError("Los números iniciales son demasiado largos.")
-    names = {
-        (b["building_id"], b["location"], b["label"].casefold())
-        for b in snapshot.get("blocks", []) + snapshot.get("archived_blocks", [])
+    names = {(b["building_id"], b["location"], b["label"].casefold()): b for b in snapshot.get("blocks", [])}
+    archived = {
+        (b["building_id"], b["location"], b["label"].casefold()): b for b in snapshot.get("archived_blocks", [])
     }
-    used = {x["number"] for x in snapshot.get("lockers", []) + snapshot.get("archived_lockers", [])}
+    used = {x["number"]: x for x in snapshot.get("lockers", []) + snapshot.get("archived_lockers", [])}
     operations = []
     for i in range(count):
         label = prefix + str(int(first_label) + i).zfill(len(first_label))
-        if not label or len(label) > 60 or (values["building_id"], values["location"], label.casefold()) in names:
-            raise ValueError(f"El nombre {label} ya existe o no es válido.")
+        key = (values["building_id"], values["location"], label.casefold())
+        if not label or len(label) > 60:
+            raise ValueError(f"El nombre {label} no es válido.")
+        if key in archived:
+            raise ValueError(
+                f"El bloque {label} está eliminado y su código sigue reservado. "
+                "No necesitas borrar el historial. Ve a Inventario → Más acciones → "
+                "Elementos eliminados / restaurar, restaura los bloques que quieras incluir y sincroniza. "
+                "Después vuelve a crear la fila: los bloques restaurados se reubicarán conservando sus casilleros."
+            )
+        existing = names.get(key)
         numbers = [
             str(int(first_number) + i * rows * columns + n).zfill(len(first_number)) for n in range(rows * columns)
         ]
-        if any(number in used or len(number) > 40 for number in numbers):
+        if existing:
+            if any(
+                existing[k] != expected
+                for k, expected in (
+                    ("plan_id", plan_id),
+                    ("rows", rows),
+                    ("columns", columns),
+                )
+            ):
+                raise ValueError(
+                    f"El bloque {label} ya existe con otro plano o dimensiones. "
+                    "La fila solo puede cambiar su ubicación, no reconstruir sus casilleros."
+                )
+            lockers = sorted(
+                (x for x in snapshot.get("lockers", []) if x["block_id"] == existing["id"]),
+                key=lambda x: (x["row"], x["column"]),
+            )
+            if [(x["row"], x["column"], x["number"]) for x in lockers] != [
+                (n // columns, n % columns, number) for n, number in enumerate(numbers)
+            ]:
+                raise ValueError(
+                    f"La numeración de {label} no coincide con la fila propuesta. "
+                    "Revisa su primer número y dimensiones; se conservan sus números y asignaciones. "
+                    "Si eliminaste casilleros por separado, restáuralos primero."
+                )
+        if any(
+            (number in used and (not existing or used[number]["block_id"] != existing["id"])) or len(number) > 40
+            for number in numbers
+        ):
             raise ValueError(
                 f"La numeración del bloque {label} coincide con casilleros existentes o supera 40 caracteres."
             )
         t = i / (count - 1) if count > 1 else 0
         operations.append(
             {
-                "action": "block.create",
+                "action": "block.update" if existing else "block.create",
+                "versions": {"block:" + existing["id"]: existing["version"]} if existing else {},
                 "payload": {
+                    **({"id": existing["id"]} if existing else {}),
                     "plan_id": plan_id,
                     "building_id": values["building_id"],
-                    "side": values["side"],
+                    "side": existing["side"] if existing else values["side"],
                     "location": values["location"],
                     "label": label,
                     "rows": rows,

@@ -1,5 +1,14 @@
 # Validación de la entrega
 
+## Versión 1.8.1 · 8 de octubre de 2026
+
+- Crear fila permite combinar bloques existentes con nuevos. Los existentes conservan identificadores, casilleros y asignaciones; solo cambia su ubicación/nombre/rotación mediante la operación de inventario existente.
+- Los eliminados muestran instrucciones de restauración, sin confundir el historial con la reserva de códigos. Se comprueban plano, dimensiones y numeración antes de reubicar; el lado registrado se conserva y se muestra en la vista previa.
+- Vista previa distingue Crear/Reubicar y conserva los colores de ocupación de los bloques existentes. La solicitud incorpora sus versiones para rechazar cambios concurrentes.
+- 16 pruebas aprobadas: eliminación/restauración de E01–E05 y ampliación hasta E08 sin perder identidades ni auditoría; rechazo atómico de versiones antiguas, numeración o dimensiones incompatibles; envío desde la vista previa, revisiones físicas y tamaño del mapa. Revisión estática sin errores.
+- No hay cambios de esquema ni eliminación de datos del usuario.
+- Ejecutable 1.8.1 verificado en perfil temporal independiente; vista previa, interfaz, servidor y autenticación correctos. Tres pruebas adicionales tras ajustar la conservación del lado registrado también aprobadas.
+
 ## Versión 1.8.0 · 8 de octubre de 2026
 
 - Creación de filas de hasta 200 bloques con extremos normalizados, vista previa, dimensiones editables y numeración de derecha a izquierda. Verificada una fila de 40 bloques / 480 casilleros y el rechazo atómico de una colisión surgida después de la vista previa.

@@ -8,6 +8,10 @@ Indica edificio, lado, cantidad, prefijo, inicio del nombre y primer número de 
 
 Revisa la vista previa y la tabla antes de pulsar **Crear fila**. Puedes volver a editar o cancelar sin crear nada. El servidor confirma toda la fila en una operación; un número duplicado o conflicto cancela todo el lote. Los casilleros nuevos quedan pendientes de verificación. Las etiquetas mantienen el mismo tamaño relativo al mapa.
 
+Si ya existen E01–E05 y quieres una fila E01–E40, la herramienta reubica los cinco existentes y crea los restantes. Deben coincidir plano, dimensiones y numeración física. La vista previa distingue **Reubicar** de **Crear** y muestra el lado de cada bloque. Los existentes conservan su lado registrado; el elegido en el formulario se aplica a los nuevos. Conserva los identificadores, asignaciones e historial.
+
+Si los eliminaste, ve primero a **Inventario → Más acciones → Elementos eliminados / restaurar**, restáuralos y sincroniza; luego crea la fila completa. La eliminación es reversible y mantiene reservados los códigos. Vaciar el historial no libera esos códigos y no es necesario para este procedimiento. Si eliminaste casilleros individualmente antes de eliminar su bloque, restáuralos también.
+
 ## Revisiones físicas
 
 Abre **Inventario → Más acciones → Revisiones físicas**. Crea una revisión con nombre y filtros de edificio, lado o bloque. El recorrido conserva la lista de casilleros seleccionados. Después de sincronizar puedes retomarlo desde otro equipo.
