@@ -1,5 +1,12 @@
 # Validación de la entrega
 
+## Versión 1.7.1 · 8 de octubre de 2026
+
+- Corrección de etiquetas que se encogían al crear o acercar bloques: el tamaño se recalculaba según la distancia al vecino más próximo en cada actualización. Se sustituyó por el tamaño base fijo de 2,8 unidades del mapa, conservando la reducción solicitada previamente.
+- El zoom escala conjuntamente mapa y etiquetas. Crear, mover, eliminar vecinos o sincronizar no modifica el tamaño relativo ni la escala del texto. No se alteran las coordenadas ni datos del inventario.
+- 16 pruebas de mapa y menús contextuales aprobadas; incluyen creación cercana, eventos de rueda en ambos sentidos, actualizaciones, movimiento, coincidencia de posiciones, eliminación del vecino, 40 bloques alineados, búsqueda y clic derecho. Revisión estática sin errores.
+- Ejecutable 1.7.1 comprobado en un perfil temporal: interfaz, mapa, servidor, autenticación, baja atómica y aviso simulado único correctos.
+
 ## Versión 1.7 · 8 de octubre de 2026
 
 - Menú contextual en todas las tablas: acciones según registro y rol, consulta y copia de datos. Importaciones, exportaciones y configuración agrupadas en menús para reducir botones.

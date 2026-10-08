@@ -10,6 +10,8 @@ En el mapa, haz clic derecho sobre un bloque para consultar, editar, verificar o
 
 ## Orden físico de los casilleros
 
+Las etiquetas del mapa mantienen un tamaño fijo respecto al plano. Se amplían o reducen junto con la imagen al usar el zoom; añadir o acercar otros bloques ya no cambia su tamaño. Si dos etiquetas se superponen, separa sus posiciones en Editar mapa.
+
 La vista del bloque se lee de frente: el primer casillero está arriba a la derecha y la secuencia avanza hacia la izquierda, luego continúa en la siguiente fila hacia abajo. Por ejemplo, un bloque de 4 × 3 que empieza en 1105 muestra:
 
 | Izquierda | Centro | Derecha |

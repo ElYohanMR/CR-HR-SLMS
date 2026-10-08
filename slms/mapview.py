@@ -1,6 +1,5 @@
 import base64
 import copy
-import math
 from PySide6.QtCore import Qt, QPointF, Signal, QVariantAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QPen, QColor, QBrush, QPolygonF, QFont, QPainter
 from PySide6.QtWidgets import (
@@ -16,6 +15,11 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
 )
+
+
+# Fixed map-space width: zoom scales the whole map, never the stored geometry.
+# Nearby or newly created blocks must not shrink existing labels on refresh.
+BLOCK_SIZE = 14 / 5
 
 
 def block_status(lockers, occupied):
@@ -246,16 +250,7 @@ class MapView(QGraphicsView):
             lockers = by_block.get(block["id"], [])
             available, assigned, color, status = block_status(lockers, occupied)
             self.details[block["id"]] = (block, available, assigned, len(lockers), color, status)
-            # Size in map units: dense rows remain separate and grow naturally when zooming.
-            pos = self.to_scene([block["x"], block["y"]])
-            distances = [
-                math.hypot(pos.x() - other["x"], pos.y() - other["y"] * self.map_height / 1000)
-                for other in blocks
-                if other["id"] != block["id"]
-            ]
-            size = min(14, min(distances, default=100) * 0.6)
-            size = max(1, size) / 5
-            item = BlockItem(block, color, status, size, self)
+            item = BlockItem(block, color, status, BLOCK_SIZE, self)
             self.scene().addItem(item)
             self.block_items.append(item)
         self.set_editing(self.editing)
