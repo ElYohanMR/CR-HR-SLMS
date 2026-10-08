@@ -89,6 +89,7 @@ class ContextMenus:
         elif table is getattr(self, "queue_table", None):
             item = next((q for q in self.store.queue(self.session["actor"]["id"]) if q["id"] == key), {})
             add("Ver detalle de solicitud", self.queue_detail)
+            add("Resolver conflicto…", self.resolve_conflict, "editor", item.get("status") in ("conflicto", "rechazada"))
             add("Reintentar solicitud", self.retry, "editor", item.get("status") == "error_temporal")
             add("Iniciar sesión para enviar", self.relogin, enabled=item.get("status") == "requiere_sesion")
         elif table is getattr(self, "admin_table", None):
@@ -129,6 +130,7 @@ class ContextMenus:
         elif self.map.plan:
             plan_id = self.map.plan["id"]
             add("Nuevo bloque aquí", lambda: self.block_form(position=position, plan_id=plan_id), "admin")
+            add("Crear fila desde aquí", lambda: self.start_block_row(position), "admin")
         menu.addSeparator()
         add("Ajustar vista", self.map.fit)
         return menu

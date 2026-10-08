@@ -181,6 +181,8 @@ def run(app):
     QApplication.processEvents()
     window.options_menu.grab().save(str(home() / "opciones.png"))
     window.options_menu.hide()
+    from .smoke_workflows import capture_workflows
+    capture_workflows(window, engine, session)
     window.synced(
         {"state": "sesion", "message": "Sesión vencida. Inicia sesión para enviar las solicitudes guardadas."}
     )

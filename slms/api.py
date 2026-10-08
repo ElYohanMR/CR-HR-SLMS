@@ -23,6 +23,8 @@ from .models import (
     Audit,
     Notification,
     MailSettings,
+    InspectionRound,
+    InspectionEntry,
     now,
     record,
 )
@@ -136,7 +138,7 @@ def create_app(engine, installation="test", demo=False):
         with sessions() as db:
             if engine.dialect.name == "postgresql":
                 db.execute(text("SELECT pg_advisory_xact_lock(731962401)"))
-            result = {"at": now(), "demo": demo}
+            result = {"at": now(), "demo": demo, "features": {"inspections": True}}
             for name, model in (
                 ("buildings", Building),
                 ("plans", Plan),
@@ -148,6 +150,8 @@ def create_app(engine, installation="test", demo=False):
                 ("audit", Audit),
                 ("notifications", Notification),
                 ("mail_settings", MailSettings),
+                ("inspection_rounds", InspectionRound),
+                ("inspection_entries", InspectionEntry),
             ):
                 query = select(model)
                 if name in ("audit", "notifications"):

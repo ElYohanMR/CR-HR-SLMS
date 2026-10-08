@@ -135,6 +135,28 @@ class Receipt(Base):
     result: Mapped[dict] = mapped_column(JSON)
 
 
+class InspectionRound(Entity, Base):
+    __tablename__ = "inspection_rounds"
+    title: Mapped[str] = mapped_column(String(150))
+    locker_ids: Mapped[list] = mapped_column(JSON)
+    created_by: Mapped[str] = mapped_column(ForeignKey("administrators.id"))
+    created_at: Mapped[str] = mapped_column(String(40), default=now)
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class InspectionEntry(Entity, Base):
+    __tablename__ = "inspection_entries"
+    round_id: Mapped[str] = mapped_column(ForeignKey("inspection_rounds.id"))
+    locker_id: Mapped[str] = mapped_column(ForeignKey("lockers.id"))
+    outcome: Mapped[str] = mapped_column(String(30))
+    notes: Mapped[str] = mapped_column(Text, default="")
+    actor_id: Mapped[str] = mapped_column(ForeignKey("administrators.id"))
+    at: Mapped[str] = mapped_column(String(40), default=now)
+    observed_at: Mapped[str] = mapped_column(String(40))
+    assignment_id: Mapped[str | None] = mapped_column(ForeignKey("assignments.id"), nullable=True)
+    __table_args__ = (Index("uq_inspection_locker", "round_id", "locker_id", unique=True),)
+
+
 class Audit(Base):
     __tablename__ = "audit_events"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)

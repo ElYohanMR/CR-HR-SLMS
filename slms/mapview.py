@@ -114,6 +114,8 @@ class MapView(QGraphicsView):
     blockOpened = Signal(str)
     assignmentsOpened = Signal(str)
     contextRequested = Signal(str, object, object)
+    rowPicked = Signal(object, object)
+    rowCancelled = Signal()
 
     def __init__(self):
         super().__init__()
@@ -125,6 +127,8 @@ class MapView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setBackgroundBrush(QColor("#eeeeee"))
         self.editing = False
+        self.picking_row = False
+        self.row_start = None
         self.dirty, self.shapes, self.block_items, self.vertices = {}, [], [], []
         self.plan = None
         self.selected_block = None
@@ -166,6 +170,11 @@ class MapView(QGraphicsView):
         return [round(point.x(), 2), round(point.y() * 1000 / self.map_height, 2)]
 
     def contextMenuEvent(self, event):
+        if self.picking_row:
+            self.picking_row = False
+            self.rowCancelled.emit()
+            event.accept()
+            return
         point = self.mapToScene(event.pos())
         if not self.plan or not self.sceneRect().contains(point):
             event.ignore()
@@ -175,6 +184,23 @@ class MapView(QGraphicsView):
             item = item.parentItem()
         self.contextRequested.emit(item.data["id"] if item else "", self.from_scene(point), event.globalPos())
         event.accept()
+
+    def mousePressEvent(self, event):
+        if self.picking_row and event.button() == Qt.MouseButton.LeftButton:
+            point = self.mapToScene(event.position().toPoint())
+            if self.sceneRect().contains(point):
+                position = self.from_scene(point)
+                if self.row_start is None:
+                    self.row_start = position
+                    self.setToolTip("Marca el final de la fila. Clic derecho para cancelar.")
+                else:
+                    start = self.row_start
+                    self.picking_row = False
+                    self.row_start = None
+                    self.rowPicked.emit(start, position)
+            event.accept()
+            return
+        super().mousePressEvent(event)
 
     def hide_card(self):
         self.selected_block = None

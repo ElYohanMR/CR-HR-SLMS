@@ -35,6 +35,7 @@ from .setup import login
 from .theme import STYLE, brand_header
 from .tableview import enable_sorting, fill_table
 from .contextmenus import ContextMenus
+from .workflows import Workflows
 
 
 STATES = {
@@ -45,6 +46,10 @@ STATES = {
     "ocupado": "Asignado",
 }
 ACTIONS = {
+    "inspection.create": "Iniciar revisión física",
+    "inspection.record": "Registrar revisión física",
+    "inspection.complete": "Cerrar revisión física",
+    "locker.inspected": "Casillero revisado",
     "employee.create": "Alta de empleado",
     "employee.update": "Actualizar empleado",
     "employee.deactivate": "Dar de baja y liberar",
@@ -87,7 +92,7 @@ def csv_safe(value):
     return "'" + text if text.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
-class Window(ContextMenus, QMainWindow):
+class Window(Workflows, ContextMenus, QMainWindow):
     def __init__(self, config, session, store=None):
         super().__init__()
         self.config, self.session = config, session
@@ -228,7 +233,10 @@ class Window(ContextMenus, QMainWindow):
             info(self, "Tu cuenta tiene acceso de consulta.")
             return
         try:
-            self.store.enqueue(self.session["actor"]["id"], action, payload, versions or {})
+            origin = getattr(self, "resolving_command", None)
+            if origin:
+                payload = dict(payload, resolves_command_id=origin)
+            request_id = self.store.enqueue(self.session["actor"]["id"], action, payload, versions or {})
         except Exception:
             QMessageBox.critical(
                 self,
@@ -239,6 +247,7 @@ class Window(ContextMenus, QMainWindow):
         self.refresh_queue()
         self.sync()
         self.statusBar().showMessage("Solicitud guardada. Consulta su confirmación en Solicitudes.", 12000)
+        return request_id
 
     def populate_options(self):
         self.options_menu.clear()
@@ -269,12 +278,14 @@ class Window(ContextMenus, QMainWindow):
         add(maps, "Guardar posiciones", self.save_map, admin and self.map.editing)
         maps.addSeparator()
         add(maps, "Nuevo bloque", self.block_form, admin)
+        add(maps, "Crear fila de bloques", self.start_block_row, admin)
         add(maps, "Nuevo plano", self.plan_form, admin)
         add(maps, "Configurar plano actual", lambda: self.plan_form(True), admin and bool(self.map.plan))
         add(maps, "Agregar contorno", self.add_polygon, admin and self.map.editing)
         add(maps, "Quitar contorno", self.remove_polygon, admin and self.map.editing)
         inventory = self.options_menu.addMenu("Inventario")
         add(inventory, "Abrir inventario", lambda: self.nav.setCurrentRow(3))
+        add(inventory, "Revisiones físicas", self.inspections_dialog)
         add(inventory, "Importar bloques Excel / CSV", self.import_inventory, admin)
         add(inventory, "Exportar bloques y ubicaciones", self.export_inventory)
         add(inventory, "Plantilla de inventario", lambda: self.export_inventory(template=True))
@@ -445,6 +456,7 @@ class Window(ContextMenus, QMainWindow):
         row = QHBoxLayout()
         self.actions_button(row, [
             ("Nuevo bloque", self.block_form, "admin"),
+            ("Crear fila de bloques", self.start_block_row, "admin"),
             ("Nuevo plano", self.plan_form, "admin"),
             ("Configurar plano", lambda: self.plan_form(True), "admin"),
             ("Agregar contorno", self.add_polygon, "admin"),
@@ -463,6 +475,8 @@ class Window(ContextMenus, QMainWindow):
         self.map.blockOpened.connect(self.open_block)
         self.map.assignmentsOpened.connect(self.block_assignments)
         self.map.contextRequested.connect(self.show_map_menu)
+        self.map.rowPicked.connect(self.create_block_row)
+        self.map.rowCancelled.connect(self.cancel_block_row)
         layout.addWidget(self.map, 1)
         legend = QLabel(
             "Verde: hay disponibles · Rojo: completamente asignado · Ámbar: sin disponibles, requiere revisión. Acerca para leer etiquetas pequeñas."
@@ -473,6 +487,8 @@ class Window(ContextMenus, QMainWindow):
     def render_map(self):
         if not hasattr(self, "map"):
             return
+        if self.map.picking_row:
+            self.cancel_block_row()
         self.map.render(self.data, self.plan_combo.currentData())
         self.map.fit()
 
@@ -520,6 +536,8 @@ class Window(ContextMenus, QMainWindow):
         )
 
     def toggle_map(self):
+        if self.map.picking_row:
+            self.cancel_block_row()
         if self.session["actor"]["role"] != "admin":
             self.edit_map.setChecked(False)
             info(self, "Solo los administradores editan el mapa.")
@@ -808,8 +826,8 @@ class Window(ContextMenus, QMainWindow):
         self.employee_search.textChanged.connect(self.refresh_employees)
         self.employees.cellDoubleClicked.connect(lambda r, c: self.employee_form(True))
 
-    def employee_form(self, edit=False):
-        item = self.lookup("employees", self.selected(self.employees)) if edit else None
+    def employee_form(self, edit=False, employee_id=None):
+        item = self.lookup("employees", employee_id or self.selected(self.employees)) if edit else None
         if edit and not item:
             info(self, "Selecciona una persona.")
             return
@@ -892,8 +910,8 @@ class Window(ContextMenus, QMainWindow):
         payload.update(employee_id=employee["id"], assignment_id=current["id"] if current else None)
         self.submit("employee.deactivate", payload, self.versions(("employee", employee), ("locker", locker)))
 
-    def employee_assignment(self):
-        employee = self.lookup("employees", self.selected(self.employees))
+    def employee_assignment(self, employee_id=None):
+        employee = self.lookup("employees", employee_id or self.selected(self.employees))
         if not employee:
             info(self, "Selecciona una persona.")
             return
@@ -954,6 +972,7 @@ class Window(ContextMenus, QMainWindow):
         row.addWidget(self.inventory_filter)
         self.actions_button(row, [
             ("Importar bloques Excel / CSV", self.import_inventory, "admin"),
+            ("Revisiones físicas", self.inspections_dialog, None),
             ("Exportar bloques y ubicaciones", self.export_inventory, None),
             ("Exportar casilleros CSV", lambda: self.export("lockers"), None),
             ("Plantilla de inventario", lambda: self.export_inventory(template=True), None),

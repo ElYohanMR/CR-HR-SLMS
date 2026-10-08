@@ -1,5 +1,18 @@
 # Validación de la entrega
 
+## Versión 1.8.0 · 8 de octubre de 2026
+
+- Creación de filas de hasta 200 bloques con extremos normalizados, vista previa, dimensiones editables y numeración de derecha a izquierda. Verificada una fila de 40 bloques / 480 casilleros y el rechazo atómico de una colisión surgida después de la vista previa.
+- Revisiones físicas persistentes: resultados por casillero, responsable, horas local/servidor, discrepancias, cierre y exportación. Ningún resultado termina asignaciones. Las observaciones concurrentes o antiguas generan conflicto; se puede retomar el recorrido tras sincronizar.
+- Asistente de conflictos con comparación legible y formularios de corrección. Una corrección crea otro identificador y conserva la solicitud original; no fuerza versiones ni repite lotes.
+- Migración 0004: dos tablas nuevas; actualización desde 0003 e invocación repetida verificadas conservando inventario.
+- Suite SQLite/Qt: 86 pruebas aprobadas, más 2 casos posteriores de concurrencia/permisos y actualización de esquema. PostgreSQL: 25 pruebas aprobadas en un clúster temporal, incluidas las 10 nuevas de estos flujos, concurrencia de asignaciones, eliminación de inventario y respaldo/restauración.
+- Revisión estática sin errores. Pantallas de vista previa, revisión y conflictos comprobadas con datos ficticios.
+- Ejecutable 1.8.0 comprobado en un perfil temporal independiente: pantallas nuevas, migraciones, servidor, autenticación, baja atómica y aviso simulado único correctos.
+- Base local actualizada a 0004 después de crear un respaldo. Comparación íntegra de las tablas preexistentes y archivos de configuración: sin cambios; se conservan 17 bloques, 204 casilleros y 51 empleados.
+- El reinicio del servidor en ejecución fue bloqueado por la revisión automática de aprobación. El servidor anterior sigue activo; reiniciar Windows y abrir la aplicación carga el servidor actualizado. La pantalla de revisiones comprueba que el servidor anuncie esta función antes de habilitarla.
+- Los correos continúan simulados. Una revisión cerrada conserva discrepancias pendientes de resolución; no sustituye el trámite de devolución o baja.
+
 ## Versión 1.7.1 · 8 de octubre de 2026
 
 - Corrección de etiquetas que se encogían al crear o acercar bloques: el tamaño se recalculaba según la distancia al vecino más próximo en cada actualización. Se sustituyó por el tamaño base fijo de 2,8 unidades del mapa, conservando la reducción solicitada previamente.

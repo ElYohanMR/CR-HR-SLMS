@@ -1,5 +1,36 @@
 # Guía de operación
 
+## Crear una fila de bloques
+
+En **Mapa → Opciones del mapa → Crear fila de bloques**, marca el primer y el último punto de la pared. También puedes hacer clic derecho en el inicio y elegir **Crear fila desde aquí**. Clic derecho cancela la selección. Guarda primero cualquier posición o contorno que hayas modificado.
+
+Indica edificio, lado, cantidad, prefijo, inicio del nombre y primer número de casillero. Por ejemplo, 40 bloques, prefijo E e inicio 01 producen E01 a E40, distribuidos uniformemente entre los extremos. Las dimensiones predeterminadas son 4 filas y 3 columnas, editables. La numeración conserva ceros iniciales y avanza de derecha a izquierda y de arriba hacia abajo.
+
+Revisa la vista previa y la tabla antes de pulsar **Crear fila**. Puedes volver a editar o cancelar sin crear nada. El servidor confirma toda la fila en una operación; un número duplicado o conflicto cancela todo el lote. Los casilleros nuevos quedan pendientes de verificación. Las etiquetas mantienen el mismo tamaño relativo al mapa.
+
+## Revisiones físicas
+
+Abre **Inventario → Más acciones → Revisiones físicas**. Crea una revisión con nombre y filtros de edificio, lado o bloque. El recorrido conserva la lista de casilleros seleccionados. Después de sincronizar puedes retomarlo desde otro equipo.
+
+Selecciona un casillero y registra el resultado con doble clic, clic derecho o **Registrar resultado**:
+
+- **Vacío y utilizable**: habilita su asignación si no tiene una persona registrada.
+- **Ocupación coincide con la asignación**: confirma la observación sin cambiar la asignación.
+- **Ocupado sin identificar**, **No coincide con el sistema** o **No se encontró físicamente**: registra una discrepancia y deja el casillero pendiente.
+- **Dañado / necesita mantenimiento**: registra el daño y la condición de mantenimiento.
+
+Las discrepancias requieren observaciones. Ningún resultado libera automáticamente una asignación. Resuelve las devoluciones o cambios desde las acciones habituales del empleado/casillero. Se conserva responsable, hora de confirmación y hora local declarada de la observación.
+
+Puedes filtrar por pendientes o discrepancias y exportar la vista a CSV. Sin conexión, las observaciones quedan **Por sincronizar**; no representan resultados confirmados. Para cerrar la revisión, todos los casilleros deben estar revisados y confirmados. Cerrar conserva las discrepancias; no las resuelve. Una revisión cerrada ya no acepta cambios. Para otro recorrido, crea una nueva.
+
+## Resolver conflictos
+
+En **Solicitudes**, haz clic derecho sobre un conflicto o rechazo y elige **Resolver conflicto…**. Verás la solicitud original junto a la última información recibida y su fecha. Usa **Sincronizar información** antes de decidir.
+
+**Preparar corrección** abre un formulario con el estado actual para asignaciones, devoluciones, edición de empleados, bloques y casilleros, eliminaciones y observaciones físicas. Revisa y guarda explícitamente. Se crea una solicitud distinta, relacionada con la original; el resultado original se conserva. Mientras una corrección esté pendiente o confirmada, el asistente evita preparar otra desde ese conflicto.
+
+Los lotes de inventario y otras operaciones se preparan nuevamente desde su sección correspondiente. El asistente lo indica; no vuelve a enviar un lote ni fuerza versiones antiguas.
+
 ## Clic derecho y pantallas simplificadas
 
 Haz clic derecho sobre cualquier fila: el menú selecciona esa fila y muestra sus acciones. En Inventario puedes abrir, asignar o liberar el casillero, consultar o editar su bloque y eliminar el casillero o el bloque completo. En Empleados puedes editar, asignar, liberar o dar de baja. En Solicitudes puedes consultar el detalle, reintentar un error temporal o iniciar sesión cuando corresponde. Las cuentas, historial, notificaciones y listas de consulta también tienen menú contextual. Todas las filas permiten consultar sus datos y copiar un valor o la fila.
@@ -75,7 +106,7 @@ En Editar mapa arrastra bloques o puntos rojos de los contornos. Guarda y espera
 
 En **Consultar**, un clic en la etiqueta abre el detalle con disponibles/asignados y **Ver asignaciones del bloque** (casillero, ID, nombre y apellidos). Verde significa que hay casilleros verificados disponibles; rojo significa que todos están asignados; ámbar significa que no hay disponibles pero no todos están asignados (por verificar, mantenimiento o retirados). Los colores reflejan la última sincronización confirmada, no solicitudes pendientes.
 
-Las etiquetas muestran únicamente el código y se reducen cuando hay bloques próximos, incluso en filas de 40 bloques. Acerca con la rueda para leerlas y arrastra el fondo para recorrer la pared; Ajustar vista vuelve al plano completo. Los bloques colocados exactamente en la misma posición deben separarse en Editar mapa. La imagen conserva su proporción; X e Y continúan expresándose de 0 a 1000 respecto al ancho y alto.
+Las etiquetas muestran únicamente el código y conservan un tamaño fijo respecto al mapa, incluso en filas de 40 bloques. Acerca con la rueda para leerlas y arrastra el fondo para recorrer la pared; Ajustar vista vuelve al plano completo. Los bloques colocados exactamente en la misma posición deben separarse en Editar mapa. La imagen conserva su proporción; X e Y continúan expresándose de 0 a 1000 respecto al ancho y alto.
 
 En **Inventario → Exportar bloques y ubicaciones** puedes guardar Excel (.xlsx) o CSV: una fila por casillero, con plano, edificio, bloque, lado, ubicación, dimensiones, X/Y, rotación y numeración. Esta exportación no incluye personas. **Plantilla de inventario** crea los encabezados y, en Excel, una hoja de instrucciones. Mantén los números como texto para conservar ceros iniciales.
 

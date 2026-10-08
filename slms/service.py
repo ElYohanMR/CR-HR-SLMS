@@ -75,6 +75,9 @@ def mutate(db, actor, command):
         raise RuleError("Tu cuenta no tiene permiso para esta operación.")
     if action in ("locker.delete", "locker.restore") and actor.role != "admin":
         raise RuleError("Solo Administración puede eliminar o restaurar inventario.")
+    if action.startswith("inspection."):
+        from .inspections import apply_inspection
+        return apply_inspection(db, actor, command)
     if action == "inventory.import":
         operations = p.get("operations")
         if not isinstance(operations, list) or not 1 <= len(operations) <= 2000:

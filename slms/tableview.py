@@ -13,7 +13,7 @@ _collator = QCollator(QLocale("es_CR"))
 _collator.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
 _collator.setNumericMode(True)
 _numbers = re.compile(r"[+-]?\d+(?:[.,]\d+)?\Z")
-_dates = {"Fecha", "Fecha / hora", "Creada", "Eliminado el"}
+_dates = {"Fecha", "Fecha / hora", "Creada", "Eliminado el", "Confirmado el"}
 
 
 class SortableItem(QTableWidgetItem):
