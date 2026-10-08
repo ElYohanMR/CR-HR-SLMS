@@ -1,5 +1,15 @@
 # Validación de la entrega
 
+## Versión 1.7 · 8 de octubre de 2026
+
+- Menú contextual en todas las tablas: acciones según registro y rol, consulta y copia de datos. Importaciones, exportaciones y configuración agrupadas en menús para reducir botones.
+- Clic derecho en mapa: consultar, editar, verificar o eliminar un bloque; crear uno en las coordenadas pulsadas en un espacio vacío. Coordenadas comprobadas después de zoom y desplazamiento.
+- La selección se toma de la fila pulsada y se vuelve a resolver por ID al ejecutar la acción. Una actualización o cambio de orden no cambia el registro destinatario; una fila que desaparece no ejecuta acciones sobre otra.
+- Vista física de derecha a izquierda y de arriba hacia abajo; columna 1 a la derecha. Comprobación en bloques de 3 y 4 columnas, conservando los números e identificadores. La plantilla explica esta convención.
+- Suite general: 75 pruebas aprobadas en SQLite/Qt. Comprobación final específica: 10 pruebas aprobadas de menús, evento real de clic derecho, permisos, coordenadas y distribución (incluye las 8 que ya estaban en la suite general y 2 casos adicionales).
+- Revisión estática sin errores. Revisión visual del inventario simplificado, menú de fila y bloque numerado de derecha a izquierda. Sin cambios de esquema ni modificación de los registros del usuario.
+- Ejecutable 1.7 verificado en perfil temporal: interfaz y menú contextual, ordenación y selección, distribución física, servidor, autenticación, baja atómica y aviso simulado único.
+
 ## Versión 1.6 · 7 de octubre de 2026
 
 - Orden por cualquier columna en todas las tablas, incluyendo consultas e importaciones. Clic ascendente/descendente y flecha visible en el encabezado.

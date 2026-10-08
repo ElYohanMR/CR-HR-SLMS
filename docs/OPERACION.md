@@ -1,5 +1,26 @@
 # Guía de operación
 
+## Clic derecho y pantallas simplificadas
+
+Haz clic derecho sobre cualquier fila: el menú selecciona esa fila y muestra sus acciones. En Inventario puedes abrir, asignar o liberar el casillero, consultar o editar su bloque y eliminar el casillero o el bloque completo. En Empleados puedes editar, asignar, liberar o dar de baja. En Solicitudes puedes consultar el detalle, reintentar un error temporal o iniciar sesión cuando corresponde. Las cuentas, historial, notificaciones y listas de consulta también tienen menú contextual. Todas las filas permiten consultar sus datos y copiar un valor o la fila.
+
+Las acciones se habilitan según el estado y los permisos de tu cuenta. Eliminar sigue solicitando un motivo y no permite quitar casilleros ocupados. Las importaciones, exportaciones y plantillas están agrupadas en **Más acciones**; las herramientas del mapa están en **Opciones del mapa**. El menú **Opciones** de la cabecera conserva los accesos generales.
+
+En el mapa, haz clic derecho sobre un bloque para consultar, editar, verificar o eliminar. Haz clic derecho sobre un lugar vacío del plano y elige **Nuevo bloque aquí**: se abre el formulario con las coordenadas del clic y el plano actual, incluso después de acercar o desplazar la vista. Confirma edificio, lado y numeración antes de guardar.
+
+## Orden físico de los casilleros
+
+La vista del bloque se lee de frente: el primer casillero está arriba a la derecha y la secuencia avanza hacia la izquierda, luego continúa en la siguiente fila hacia abajo. Por ejemplo, un bloque de 4 × 3 que empieza en 1105 muestra:
+
+| Izquierda | Centro | Derecha |
+| --- | --- | --- |
+| 1107 | 1106 | 1105 |
+| 1110 | 1109 | 1108 |
+| 1113 | 1112 | 1111 |
+| 1116 | 1115 | 1114 |
+
+En Inventario y archivos de importación/exportación, **columna 1 significa la derecha**, columna 2 la siguiente hacia la izquierda, etc. Fila 1 es la superior. Los números, identificadores, asignaciones e historial existentes se conservan; se corrige la representación visual del bloque.
+
 ## Ordenar las tablas
 
 Haz clic en cualquier encabezado de columna para ordenar sus filas. El primer clic ordena de menor a mayor o de A a Z (▲); otro clic invierte el orden (▼). Funciona en Empleados, Inventario, Solicitudes, Historial, Administración y las listas de consulta e importación.
@@ -44,7 +65,7 @@ En **Inventario** están **Eliminar casillero seleccionado**, **Eliminar bloque�
 
 La eliminación conserva historial, responsable y fecha, pero oculta el elemento del mapa y del inventario. Sus códigos permanecen reservados. **Elementos eliminados → Restaurar seleccionado** permite recuperarlo; restaura primero su bloque si también fue eliminado. Los casilleros restaurados quedan pendientes de verificación y no recuperan antiguas asignaciones. Restaurar un bloque no restaura casilleros eliminados individualmente antes de eliminar ese bloque.
 
-Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, por filas de izquierda a derecha. También puedes generar una secuencia desde un primer número.
+Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, por filas de derecha a izquierda y de arriba hacia abajo. También puedes generar una secuencia desde un primer número.
 
 Los números físicos deben ser únicos en esta instalación. Si se repiten entre edificios, establece primero una convención que los distinga.
 

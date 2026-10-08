@@ -109,6 +109,7 @@ class Vertex(QGraphicsEllipseItem):
 class MapView(QGraphicsView):
     blockOpened = Signal(str)
     assignmentsOpened = Signal(str)
+    contextRequested = Signal(str, object, object)
 
     def __init__(self):
         super().__init__()
@@ -159,6 +160,17 @@ class MapView(QGraphicsView):
 
     def from_scene(self, point):
         return [round(point.x(), 2), round(point.y() * 1000 / self.map_height, 2)]
+
+    def contextMenuEvent(self, event):
+        point = self.mapToScene(event.pos())
+        if not self.plan or not self.sceneRect().contains(point):
+            event.ignore()
+            return
+        item = self.itemAt(event.pos())
+        while item is not None and not isinstance(item, BlockItem):
+            item = item.parentItem()
+        self.contextRequested.emit(item.data["id"] if item else "", self.from_scene(point), event.globalPos())
+        event.accept()
 
     def hide_card(self):
         self.selected_block = None

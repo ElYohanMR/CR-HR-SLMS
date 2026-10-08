@@ -84,6 +84,7 @@ def write_inventory(path, rows):
             "Una fila por casillero; no se importan empleados ni asignaciones.",
             "Para crear bloques: id_bloque y version_bloque vacíos. El plano debe existir (ID o nombre único).",
             "Filas/columnas: tamaño del bloque. Fila/columna: posición del casillero, empezando en 1.",
+            "Columna 1 = derecha. La numeración avanza de derecha a izquierda y de arriba hacia abajo.",
             "X/Y: coordenadas de 0 a 1000 relativas al ancho/alto del plano. Rotación: -360 a 360.",
             "Ubicación EXT o INT. Lado N, S, E u O. Número físico único, conservado como texto.",
             "Para actualizar: conserva ID y versión exportados; modifica solo bloque (nombre), X, Y o rotación.",

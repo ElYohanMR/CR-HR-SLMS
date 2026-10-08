@@ -74,6 +74,7 @@ class Locker(Entity, Base):
     block_id: Mapped[str] = mapped_column(ForeignKey("blocks.id"))
     number: Mapped[str] = mapped_column(String(40), unique=True)
     row: Mapped[int] = mapped_column(Integer)
+    # Zero-based position in the numbering sequence; column 0 is the right edge.
     column: Mapped[int] = mapped_column(Integer)
     condition: Mapped[str] = mapped_column(String(20), default="pendiente")
     notes: Mapped[str] = mapped_column(Text, default="")

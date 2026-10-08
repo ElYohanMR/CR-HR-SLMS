@@ -27,7 +27,7 @@ for source, target in (
 ):
     shutil.copy2(project / source, release / target)
 (release / "LEEME.md").write_text(
-    "# Samtec Lockers 1.6\n\n"
+    "# Samtec Lockers 1.7\n\n"
     "Extrae toda esta carpeta y abre SamtecLockers.exe. Conserva _internal junto al ejecutable.\n\n"
     "El primer arranque permite configurar PostgreSQL, conectar al servidor de TI o usar una demostración. "
     "Introduce las contraseñas directamente en el asistente. Configurar conexion.cmd vuelve a abrirlo.\n\n"
@@ -69,6 +69,8 @@ for name in (
     "resumen",
     "mapa",
     "inventario",
+    "inventario-menu",
+    "bloque-derecha-izquierda",
     "empleados",
     "baja",
     "devolucion",

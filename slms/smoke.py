@@ -3,7 +3,7 @@
 import json
 import uuid
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QDialog, QGridLayout
 from PySide6.QtGui import QFontDatabase
 from fastapi.testclient import TestClient
 from .api import create_app
@@ -124,6 +124,28 @@ def run(app):
     assert window.inventory.item(0, 0).text() == "DEMO-001"
     QApplication.processEvents()
     window.grab().save(str(home() / "inventario.png"))
+    menu = window.table_menu(window.inventory, 0, 0)
+    menu.popup(window.inventory.viewport().mapToGlobal(window.inventory.visualItemRect(window.inventory.item(0, 0)).center()))
+    QApplication.processEvents()
+    menu.grab().save(str(home() / "inventario-menu.png"))
+    assert any(action.text() == "Eliminar bloque completo" for action in menu.actions())
+    menu.close()
+    menu.deleteLater()
+    original_dialog_exec = QDialog.exec
+    def capture_block(dialog):
+        dialog.show()
+        QApplication.processEvents()
+        grid = dialog.findChild(QGridLayout)
+        assert grid.itemAtPosition(0, 3).widget().text().startswith("DEMO-001\n")
+        assert grid.itemAtPosition(0, 0).widget().text().startswith("DEMO-004\n")
+        dialog.grab().save(str(home() / "bloque-derecha-izquierda.png"))
+        dialog.close()
+        return QDialog.DialogCode.Rejected
+    QDialog.exec = capture_block
+    try:
+        window.open_block(snapshot["blocks"][0]["id"])
+    finally:
+        QDialog.exec = original_dialog_exec
     assert window.inventory.rowCount() == 16
     assert window.employees.rowCount() == 1
     window.nav.setCurrentRow(2)

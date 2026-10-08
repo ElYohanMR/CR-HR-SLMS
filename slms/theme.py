@@ -53,6 +53,7 @@ QStatusBar { background:#eeeeee; color:#555555; border-top:1px solid #dddddd; }
 QToolTip { background:#333333; color:white; border:1px solid #555555; padding:6px; }
 QMenu { background:white; color:#333333; border:1px solid #dddddd; }
 QMenu::item:selected { background:#ffddc9; color:#222222; }
+QMenu::item:disabled { color:#999999; }
 QCheckBox { color:#333333; spacing:8px; }
 QGroupBox { color:#333333; border:1px solid #dddddd; margin-top:15px; padding:10px; }
 QScrollArea#formScroll { background:transparent; border:0; }

@@ -34,6 +34,7 @@ from .mapview import MapView
 from .setup import login
 from .theme import STYLE, brand_header
 from .tableview import enable_sorting, fill_table
+from .contextmenus import ContextMenus
 
 
 STATES = {
@@ -86,7 +87,7 @@ def csv_safe(value):
     return "'" + text if text.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
-class Window(QMainWindow):
+class Window(ContextMenus, QMainWindow):
     def __init__(self, config, session, store=None):
         super().__init__()
         self.config, self.session = config, session
@@ -200,6 +201,10 @@ class Window(QMainWindow):
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table.verticalHeader().setVisible(False)
         enable_sorting(table)
+        if self is not None:
+            table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            table.customContextMenuRequested.connect(lambda point: self.show_table_menu(table, point))
+            table.setToolTip("Clic derecho sobre una fila para ver sus acciones. Clic en un encabezado para ordenar.")
         layout.addWidget(table, 1)
         return table
 
@@ -438,11 +443,14 @@ class Window(QMainWindow):
         self.save_map_button = self.button(row, "Guardar posiciones", self.save_map)
         layout.addLayout(row)
         row = QHBoxLayout()
-        self.button(row, "Nuevo bloque", self.block_form)
-        self.button(row, "Nuevo plano", self.plan_form)
-        self.button(row, "Configurar plano", lambda: self.plan_form(True))
-        self.button(row, "Agregar contorno", self.add_polygon)
-        self.button(row, "Quitar contorno", self.remove_polygon)
+        self.actions_button(row, [
+            ("Nuevo bloque", self.block_form, "admin"),
+            ("Nuevo plano", self.plan_form, "admin"),
+            ("Configurar plano", lambda: self.plan_form(True), "admin"),
+            ("Agregar contorno", self.add_polygon, "admin"),
+            ("Quitar contorno", self.remove_polygon, "admin"),
+        ], "Opciones del mapa")
+        row.addWidget(QLabel("Clic derecho: acciones del bloque o crear uno en ese lugar."), 1)
         layout.addLayout(row)
         self.map = MapView()
         search_row = QHBoxLayout()
@@ -454,6 +462,7 @@ class Window(QMainWindow):
         layout.addLayout(search_row)
         self.map.blockOpened.connect(self.open_block)
         self.map.assignmentsOpened.connect(self.block_assignments)
+        self.map.contextRequested.connect(self.show_map_menu)
         layout.addWidget(self.map, 1)
         legend = QLabel(
             "Verde: hay disponibles · Rojo: completamente asignado · Ámbar: sin disponibles, requiere revisión. Acerca para leer etiquetas pequeñas."
@@ -556,6 +565,9 @@ class Window(QMainWindow):
             )
         rows.sort(key=lambda entry: entry[1][0])
         self.fill(table, rows)
+        table.context_actions = lambda key: [
+            ("Abrir casillero", lambda: self.locker_dialog(key), None),
+        ]
         layout.addWidget(
             QLabel(
                 f"{len(rows)} asignaciones vigentes · Según la última sincronización."
@@ -659,7 +671,7 @@ class Window(QMainWindow):
                 payload["background"] = base64.b64encode(raw).decode()
         self.submit("plan.update" if plan else "plan.create", payload, self.versions(("plan", plan)))
 
-    def block_form(self, block=None):
+    def block_form(self, block=None, position=None, plan_id=None):
         if isinstance(block, bool):
             block = None
         if not self.data["plans"] or not self.data["buildings"]:
@@ -686,9 +698,10 @@ class Window(QMainWindow):
             "Editar bloque" if block else "Nuevo bloque",
             fields,
             block
-            or {"x": 500, "y": 500, "rows": 4, "columns": 3, "label": "S01", "plan_id": self.plan_combo.currentData()},
+            or {"x": position[0] if position else 500, "y": position[1] if position else 500,
+                "rows": 4, "columns": 3, "label": "S01", "plan_id": plan_id or self.plan_combo.currentData()},
             self,
-            description="Los casilleros nuevos quedan pendientes de verificación física. La numeración se recorre por filas, de izquierda a derecha.",
+            description="Los casilleros nuevos quedan pendientes de verificación física. La numeración avanza de derecha a izquierda, fila por fila de arriba hacia abajo. La columna 1 está a la derecha.",
         )
         if form.exec() != QDialog.DialogCode.Accepted:
             return
@@ -717,6 +730,7 @@ class Window(QMainWindow):
         dialog.setWindowTitle("Bloque " + block["label"])
         layout = QVBoxLayout(dialog)
         layout.addWidget(QLabel(f"{block['rows']} filas × {block['columns']} columnas"))
+        layout.addWidget(QLabel("Vista de frente · Numeración de derecha a izquierda, de arriba hacia abajo."))
         grid = QGridLayout()
         layout.addLayout(grid)
         for locker in sorted(
@@ -736,7 +750,8 @@ class Window(QMainWindow):
             button.clicked.connect(
                 lambda checked=False, locker=locker: (dialog.accept(), self.locker_dialog(locker["id"]))
             )
-            grid.addWidget(button, locker["row"], locker["column"])
+            # Stored column is the ordinal within the numbering sequence (0 = right).
+            grid.addWidget(button, locker["row"], block["columns"] - 1 - locker["column"])
         self.button(layout, "Editar nombre / posición", lambda: (dialog.accept(), self.block_form(block)))
         self.button(layout, "Eliminar bloque", lambda: (dialog.accept(), self.delete_inventory("block", block)))
         self.button(
@@ -771,8 +786,11 @@ class Window(QMainWindow):
         self.employee_search.setPlaceholderText("Buscar empleado…")
         row.addWidget(self.employee_search, 1)
         self.button(row, "Nuevo", self.employee_form)
-        self.button(row, "Editar seleccionado", lambda: self.employee_form(True))
-        self.button(row, "Asignar / reasignar", self.employee_assignment)
+        self.actions_button(row, [
+            ("Importar CSV", self.import_employees, "editor"),
+            ("Exportar CSV", lambda: self.export("employees"), None),
+            ("Plantilla CSV", self.template_csv, None),
+        ])
         layout.addLayout(row)
         row = QHBoxLayout()
         self.employee_status = QComboBox()
@@ -781,14 +799,7 @@ class Window(QMainWindow):
         self.employee_status.addItem("Todos los empleados", "all")
         row.addWidget(self.employee_status)
         self.employee_status.currentIndexChanged.connect(self.refresh_employees)
-        self.button(row, "Liberar casillero", self.employee_release)
-        self.button(row, "Dar de baja y liberar", self.deactivate_employee)
-        row.addStretch()
-        layout.addLayout(row)
-        row = QHBoxLayout()
-        self.button(row, "Importar CSV", self.import_employees)
-        self.button(row, "Exportar CSV", lambda: self.export("employees"))
-        self.button(row, "Plantilla CSV", self.template_csv)
+        row.addWidget(QLabel("Clic derecho en un empleado para editar, asignar o dar de baja."))
         row.addStretch()
         layout.addLayout(row)
         self.employees = self.table(
@@ -941,24 +952,19 @@ class Window(QMainWindow):
         for state in ("utilizable", "ocupado", "pendiente", "mantenimiento", "retirado"):
             self.inventory_filter.addItem(STATES[state], state)
         row.addWidget(self.inventory_filter)
-        self.button(row, "Abrir seleccionado", lambda: self.locker_dialog(self.selected(self.inventory)))
-        self.button(row, "Exportar CSV", lambda: self.export("lockers"))
+        self.actions_button(row, [
+            ("Importar bloques Excel / CSV", self.import_inventory, "admin"),
+            ("Exportar bloques y ubicaciones", self.export_inventory, None),
+            ("Exportar casilleros CSV", lambda: self.export("lockers"), None),
+            ("Plantilla de inventario", lambda: self.export_inventory(template=True), None),
+            ("Elementos eliminados / restaurar", self.archived_inventory, None),
+        ])
         layout.addLayout(row)
-        row = QHBoxLayout()
-        self.button(row, "Importar bloques Excel / CSV", self.import_inventory)
-        self.button(row, "Exportar bloques y ubicaciones", self.export_inventory)
-        self.button(row, "Plantilla de inventario", lambda: self.export_inventory(template=True))
-        layout.addLayout(row)
-        row = QHBoxLayout()
-        self.button(
-            row,
-            "Eliminar casillero seleccionado",
-            lambda: self.delete_inventory("locker", self.lookup("lockers", self.selected(self.inventory))),
-        )
-        self.button(row, "Eliminar bloque…", self.choose_delete_block)
-        self.button(row, "Elementos eliminados", self.archived_inventory)
-        layout.addLayout(row)
+        layout.addWidget(QLabel("Clic derecho en un casillero para ver sus acciones y las de su bloque. Columna 1 = derecha."))
         self.inventory = self.table(layout, ["Número", "Ubicación", "Estado", "Empleado", "Fila / columna"])
+        self.inventory.horizontalHeaderItem(4).setToolTip(
+            "Fila 1 = arriba; columna 1 = derecha. Haz clic para ordenar."
+        )
         self.locker_search.textChanged.connect(self.refresh_inventory)
         self.inventory_filter.currentIndexChanged.connect(self.refresh_inventory)
         self.inventory.cellDoubleClicked.connect(lambda r, c: self.locker_dialog(self.selected(self.inventory)))
@@ -1069,6 +1075,7 @@ class Window(QMainWindow):
                 self.delete_inventory(*selected, restore=True)
 
         self.button(layout, "Restaurar seleccionado", restore_selected)
+        table.context_actions = lambda key: [("Restaurar elemento", restore_selected, "admin")]
         self.button(layout, "Cerrar", dialog.reject)
         dialog.exec()
 
@@ -1284,8 +1291,7 @@ class Window(QMainWindow):
         )
         row = QHBoxLayout()
         self.button(row, "Sincronizar ahora", self.sync)
-        self.button(row, "Reintentar seleccionada", self.retry)
-        self.button(row, "Ver detalle", self.queue_detail)
+        row.addWidget(QLabel("Clic derecho en una solicitud para consultar o reintentar."))
         row.addStretch()
         layout.addLayout(row)
         self.queue_table = self.table(layout, ["Creada", "Operación", "Estado", "Intentos", "Resultado"])
@@ -1332,15 +1338,20 @@ class Window(QMainWindow):
         self.audit_search.setPlaceholderText("Buscar operación, persona, casillero o responsable…")
         row.addWidget(self.audit_search, 1)
         self.button(row, "Cargar historial anterior", self.load_history)
-        self.button(row, "Exportar historial cargado", lambda: self.export("audit"))
+        self.actions_button(row, [
+            ("Exportar historial cargado", lambda: self.export("audit"), None),
+            ("Ver notificaciones de correo (simuladas)", self.notifications, None),
+        ])
         layout.addLayout(row)
         self.audit_table = self.table(layout, ["Fecha / hora", "Operación", "Responsable", "Registro", "Motivo"])
         self.audit_search.textChanged.connect(self.refresh_history)
         self.audit_table.cellDoubleClicked.connect(self.audit_detail)
-        self.button(layout, "Ver notificaciones de correo (simuladas)", self.notifications)
 
     def audit_detail(self, row, col):
-        item = self.lookup("audit", self.selected(self.audit_table))
+        self.show_audit(self.selected(self.audit_table))
+
+    def show_audit(self, id):
+        item = self.lookup("audit", id)
         if item:
             info(
                 self,
@@ -1397,18 +1408,21 @@ class Window(QMainWindow):
         table.cellDoubleClicked.connect(
             lambda r, c: info(dialog, (self.lookup("notifications", self.selected(table)) or {}).get("body", ""))
         )
+        table.context_actions = lambda key: [
+            ("Ver mensaje", lambda: info(dialog, (self.lookup("notifications", key) or {}).get("body", "")), None),
+        ]
         dialog.exec()
 
     def make_admin(self):
         layout = self.page("Administración", "Cuentas individuales, edificios y copias de seguridad.")
         row = QHBoxLayout()
         self.button(row, "Nueva cuenta", self.admin_form)
-        self.button(row, "Editar cuenta", lambda: self.admin_form(True))
-        self.button(row, "Edificios", self.buildings_dialog)
-        self.button(row, "Crear copia de seguridad", self.backup)
-        layout.addLayout(row)
-        row = QHBoxLayout()
-        self.button(row, "Configurar avisos a HR", self.mail_settings_form)
+        self.actions_button(row, [
+            ("Edificios", self.buildings_dialog, "admin"),
+            ("Crear copia de seguridad", self.backup, "admin"),
+            ("Configurar avisos a HR", self.mail_settings_form, "admin"),
+        ])
+        row.addWidget(QLabel("Clic derecho en una cuenta para editar sus datos y permisos."))
         row.addStretch()
         layout.addLayout(row)
         self.admin_table = self.table(layout, ["Usuario", "Nombre", "Permiso", "Estado"])
