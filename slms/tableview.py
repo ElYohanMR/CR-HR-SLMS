@@ -67,6 +67,7 @@ def enable_sorting(table):
 
 
 def fill_table(table, rows):
+    checked = set(checked_ids(table))
     current = table.item(table.currentRow(), 0)
     selected = current.data(Qt.ItemDataRole.UserRole) if current else None
     sorting = table.isSortingEnabled()
@@ -84,6 +85,10 @@ def fill_table(table, rows):
             for column, value in enumerate(values):
                 label = table.horizontalHeaderItem(column).text()
                 table.setItem(row, column, SortableItem(value, key, label))
+                if column == 0:
+                    table.item(row, 0).setCheckState(
+                        Qt.CheckState.Checked if key in checked else Qt.CheckState.Unchecked
+                    )
     finally:
         table.setSortingEnabled(sorting)
         # Restore by record ID after sorting, never by the previous row number.
@@ -96,3 +101,19 @@ def fill_table(table, rows):
                     break
         table.blockSignals(signals)
         table.setUpdatesEnabled(updates)
+
+
+def checked_ids(table):
+    return [
+        table.item(row, 0).data(Qt.ItemDataRole.UserRole)
+        for row in range(table.rowCount())
+        if table.item(row, 0)
+        and table.item(row, 0).checkState() == Qt.CheckState.Checked
+        and not table.isRowHidden(row)
+    ]
+
+
+def mark_rows(table, checked):
+    for row in range(table.rowCount()):
+        if not table.isRowHidden(row) and table.item(row, 0):
+            table.item(row, 0).setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)

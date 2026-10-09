@@ -28,6 +28,9 @@ class Admin(Entity, Base):
     password_hash: Mapped[str] = mapped_column(Text)
     role: Mapped[str] = mapped_column(String(20), default="admin")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_initial: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    __table_args__ = (Index("uq_initial_admin", "is_initial", unique=True,
+                           sqlite_where=text("is_initial = true"), postgresql_where=text("is_initial = true")),)
 
 
 class Session(Base):

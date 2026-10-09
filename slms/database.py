@@ -63,6 +63,7 @@ def initialize(engine, username, password, demo=False):
             Admin(
                 username=username.strip().lower(),
                 name="Administrador inicial",
+                is_initial=True,
                 password_hash=password_hash(password),
                 role="admin",
             )

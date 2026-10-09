@@ -78,6 +78,9 @@ def mutate(db, actor, command):
     if action.startswith("inspection."):
         from .inspections import apply_inspection
         return apply_inspection(db, actor, command)
+    if action in ("inventory.restore_many", "inventory.purge"):
+        from .inventory_batch import apply_batch
+        return apply_batch(db, actor, command)
     if action == "inventory.import":
         operations = p.get("operations")
         if not isinstance(operations, list) or not 1 <= len(operations) <= 2000:
@@ -404,6 +407,10 @@ def mutate(db, actor, command):
         notification(db, command["id"], employee, action, get(db, Locker, target.locker_id))
     elif action in ("admin.create", "admin.update"):
         target = get(db, Admin, p.get("id")) if action.endswith("update") else Admin()
+        if "is_initial" in p:
+            raise RuleError("La identidad del administrador inicial no se puede modificar.")
+        if target.is_initial and actor.id != target.id:
+            raise RuleError("Solo el administrador inicial puede modificar su propia cuenta.")
         if target.id:
             check_version(target, versions, "admin")
             before = record(target)

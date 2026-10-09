@@ -1,5 +1,21 @@
 # Guía de operación
 
+## Marcar varias filas
+
+Todas las tablas tienen casillas junto al primer dato de cada fila. Puedes marcar varias sin mantener pulsado Ctrl. Clic derecho permite **Marcar todas las filas visibles**, **Desmarcar todas las filas visibles** y **Copiar filas marcadas**. Las marcas se conservan al ordenar o sincronizar por identificador; una fila que desaparece por un filtro queda desmarcada. La fila resaltada y las casillas son selecciones independientes: las acciones individuales siguen usando la fila pulsada.
+
+En **Inventario → Más acciones → Elementos eliminados / restaurar**, marca los bloques o casilleros y pulsa **Restaurar marcados**. Revisa la lista y escribe un motivo. El servidor aplica todo el lote o ninguno. Marcar un bloque y sus casilleros no duplica la restauración. Los casilleros que se eliminaron antes que el bloque solo se recuperan si también los marcas. Los restaurados quedan pendientes de verificación física.
+
+## Eliminar inventario definitivamente
+
+Solo la cuenta administradora inicial ve **Eliminar definitivamente marcados** en Elementos eliminados. Esta identidad se guarda al crear la instalación y no depende del nombre de usuario ni de que otra cuenta tenga rol Administrador. El servidor vuelve a comprobar el permiso en cada solicitud. Otras cuentas no pueden modificar la cuenta inicial.
+
+Marca bloques/casilleros que ya estén eliminados, revisa la lista y el número de casilleros incluidos, escribe un motivo y confirma escribiendo **ELIMINAR**. Un bloque incluye todos sus casilleros, incluso los eliminados por separado. Cuando el servidor confirma, los registros desaparecen definitivamente y sus códigos pueden reutilizarse. No se pueden restaurar desde la aplicación; se conserva la auditoría de la operación.
+
+Para conservar el historial de uso, no se permite eliminar definitivamente casilleros con asignaciones, presentes o pasadas, ni incluidos en revisiones físicas. Un conflicto, cambio de versión o elemento protegido cancela todo el lote. La función sirve para retirar inventario creado por error o para pruebas que todavía no tenga ese historial; no borra empleados ni el historial general.
+
+Abre la aplicación actualizada para cargar su servicio local. Si sigue activo un servidor anterior, reinicia Windows y vuelve a abrirla. Las nuevas acciones por lote requieren que el servidor anuncie esta función.
+
 ## Crear una fila de bloques
 
 En **Mapa → Opciones del mapa → Crear fila de bloques**, marca el primer y el último punto de la pared. También puedes hacer clic derecho en el inicio y elegir **Crear fila desde aquí**. Clic derecho cancela la selección. Guarda primero cualquier posición o contorno que hayas modificado.

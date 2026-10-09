@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMenu, QPushButton
 
 from .forms import info
+from .tableview import checked_ids, mark_rows
 
 
 class ContextMenus:
@@ -100,6 +101,17 @@ class ContextMenus:
             add(title, callback, permission)
         if menu.actions():
             menu.addSeparator()
+        menu.addAction("Marcar todas las filas visibles").triggered.connect(lambda: mark_rows(table, True))
+        menu.addAction("Desmarcar todas las filas visibles").triggered.connect(lambda: mark_rows(table, False))
+        copy_marked = menu.addAction("Copiar filas marcadas")
+        copy_marked.setEnabled(bool(checked_ids(table)))
+        def copy_checked():
+            checked = set(checked_ids(table))
+            lines = ["\t".join(table.item(r, c).text() for c in range(table.columnCount()))
+                     for r in range(table.rowCount()) if table.item(r, 0).data(Qt.ItemDataRole.UserRole) in checked]
+            QApplication.clipboard().setText("\n".join(lines))
+        copy_marked.triggered.connect(copy_checked)
+        menu.addSeparator()
         values = [table.item(row, c).text() if table.item(row, c) else "" for c in range(table.columnCount())]
         detail = "\n".join(f"{table.horizontalHeaderItem(c).text()}: {value}" for c, value in enumerate(values))
         # These are a snapshot of visible text, so copying remains valid after a refresh.

@@ -36,6 +36,7 @@ from .theme import STYLE, brand_header
 from .tableview import enable_sorting, fill_table
 from .contextmenus import ContextMenus
 from .workflows import Workflows
+from .inventory_selection import InventorySelection
 
 
 STATES = {
@@ -46,6 +47,10 @@ STATES = {
     "ocupado": "Asignado",
 }
 ACTIONS = {
+    "inventory.restore_many": "Restaurar elementos marcados",
+    "inventory.purge": "Eliminar definitivamente inventario",
+    "block.purge": "Bloque eliminado definitivamente",
+    "locker.purge": "Casillero eliminado definitivamente",
     "inspection.create": "Iniciar revisión física",
     "inspection.record": "Registrar revisión física",
     "inspection.complete": "Cerrar revisión física",
@@ -92,7 +97,7 @@ def csv_safe(value):
     return "'" + text if text.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
-class Window(Workflows, ContextMenus, QMainWindow):
+class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
     def __init__(self, config, session, store=None):
         super().__init__()
         self.config, self.session = config, session
@@ -209,7 +214,7 @@ class Window(Workflows, ContextMenus, QMainWindow):
         if self is not None:
             table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             table.customContextMenuRequested.connect(lambda point: self.show_table_menu(table, point))
-            table.setToolTip("Clic derecho sobre una fila para ver sus acciones. Clic en un encabezado para ordenar.")
+            table.setToolTip("Marca las casillas para seleccionar varias filas. Clic derecho para marcar todas, copiar o ver acciones. Clic en un encabezado para ordenar.")
         layout.addWidget(table, 1)
         return table
 
@@ -1066,6 +1071,7 @@ class Window(Workflows, ContextMenus, QMainWindow):
         layout.addWidget(
             QLabel("El historial y los códigos se conservan. Restaura primero el bloque si también fue eliminado.")
         )
+        layout.addWidget(QLabel("Marca las casillas para actuar sobre varios elementos. Clic derecho permite marcar todos."))
         table = self.table(layout, ["Tipo", "Código", "Eliminado el"])
         items = {
             kind + ":" + item["id"]: (kind, item)
@@ -1094,7 +1100,15 @@ class Window(Workflows, ContextMenus, QMainWindow):
                 self.delete_inventory(*selected, restore=True)
 
         self.button(layout, "Restaurar seleccionado", restore_selected)
-        table.context_actions = lambda key: [("Restaurar elemento", restore_selected, "admin")]
+        self.button(layout, "Restaurar marcados", lambda: self.archived_batch(table, items, dialog))
+        if self.initial_admin():
+            self.button(layout, "Eliminar definitivamente marcados", lambda: self.archived_batch(table, items, dialog, purge=True))
+        table.context_actions = lambda key: (
+            [("Restaurar elemento", restore_selected, "admin"),
+             ("Restaurar marcados", lambda: self.archived_batch(table, items, dialog), "admin")]
+            + ([("Eliminar definitivamente marcados", lambda: self.archived_batch(table, items, dialog, purge=True), "admin")]
+               if self.initial_admin() else [])
+        )
         self.button(layout, "Cerrar", dialog.reject)
         dialog.exec()
 

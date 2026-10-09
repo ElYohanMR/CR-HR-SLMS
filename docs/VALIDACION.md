@@ -1,5 +1,17 @@
 # Validación de la entrega
 
+## Versión 1.9.0 · 9 de octubre de 2026
+
+- Casillas en todas las tablas; marcar/desmarcar filas visibles y copiar las marcadas mediante clic derecho. Persistencia por ID al ordenar/refrescar y limpieza al filtrar fuera una fila.
+- Restauración múltiple atómica con deduplicación de bloques e hijos; incluye casilleros eliminados anteriormente si se marcan explícitamente.
+- Eliminación definitiva de inventario archivado sin asignaciones ni revisiones asociadas. Libera códigos, conserva auditoría y exige motivo, confirmación escrita y cuenta inicial. Una versión antigua o elemento protegido cancela todo el lote.
+- Migración 0005 identifica y persiste la cuenta inicial, sin depender del nombre o rol. Instalaciones heredadas ambiguas no reciben este permiso automáticamente. Ninguna petición puede crear o modificar la marca de cuenta inicial; otros administradores tampoco pueden cambiar esa cuenta.
+- PostgreSQL: 15 pruebas aprobadas en clúster temporal, incluyendo concurrencia, reenvíos, migración, restauración, conservación de históricos y respaldo/restauración.
+- Revisión visual de las casillas, selección de dos bloques y formulario de eliminación definitiva con datos ficticios. Revisión estática sin errores.
+- Suite completa SQLite/Qt: 101 pruebas aprobadas. Ejecutable 1.9.0 verificado en perfil temporal: interfaz, pantallas nuevas, migraciones, servidor, autenticación y operaciones habituales correctas.
+- Base local migrada a 0005 tras un respaldo. Los campos anteriores y archivos de configuración permanecen íntegros; se reconoció una sola cuenta inicial. No se ejecutaron eliminaciones/restauraciones sobre el inventario real.
+- El inicio del servicio local fue bloqueado por la revisión automática de aprobación. La aplicación inicia normalmente su servicio al abrirse; el ejecutable y su servidor se comprobaron en un perfil temporal independiente.
+
 ## Versión 1.8.1 · 8 de octubre de 2026
 
 - Crear fila permite combinar bloques existentes con nuevos. Los existentes conservan identificadores, casilleros y asignaciones; solo cambia su ubicación/nombre/rotación mediante la operación de inventario existente.

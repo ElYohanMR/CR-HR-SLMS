@@ -1,8 +1,10 @@
 """Exercise the new dialogs with fictitious data in the smoke-test profile."""
 
 import uuid
+import copy
 
-from PySide6.QtWidgets import QApplication, QDialog, QTableWidget
+from PySide6.QtWidgets import QApplication, QDialog, QTableWidget, QPushButton
+from PySide6.QtCore import Qt
 from fastapi.testclient import TestClient
 
 from .api import create_app
@@ -97,3 +99,61 @@ def capture_workflows(window, engine, session):
         window.resolve_conflict()
     finally:
         Form.exec, QDialog.exec = old_form, old_dialog
+    capture_archived_selection(window)
+
+
+def capture_archived_selection(window):
+    original = window.data
+    window.data = copy.deepcopy(original)
+    stamp = now()
+    for index in range(2):
+        block = dict(
+            original["blocks"][0],
+            id=f"preview-deleted-{index}",
+            label=f"E0{index + 1}",
+            rows=4,
+            columns=3,
+            deleted_at=stamp,
+        )
+        window.data["archived_blocks"].append(block)
+        for cell in range(12):
+            window.data["archived_lockers"].append(
+                dict(
+                    original["lockers"][0],
+                    id=f"preview-locker-{index}-{cell}",
+                    block_id=block["id"],
+                    number=str(61 + index * 12 + cell),
+                    row=cell // 3,
+                    column=cell % 3,
+                    deleted_at=stamp,
+                )
+            )
+    window.refresh()
+    old_form, old_dialog = Form.exec, QDialog.exec
+
+    def form_preview(form):
+        form.show()
+        QApplication.processEvents()
+        form.grab().save(str(home() / "eliminacion-definitiva.png"))
+        form.close()
+        return QDialog.DialogCode.Rejected
+
+    def archive_preview(dialog):
+        table = dialog.findChild(QTableWidget)
+        for row in range(table.rowCount()):
+            if table.item(row, 0).text() == "Bloque":
+                table.item(row, 0).setCheckState(Qt.CheckState.Checked)
+        dialog.show()
+        QApplication.processEvents()
+        dialog.grab().save(str(home() / "seleccion-multiple.png"))
+        next(b for b in dialog.findChildren(QPushButton) if "definitivamente" in b.text()).click()
+        dialog.close()
+        return QDialog.DialogCode.Rejected
+
+    try:
+        Form.exec, QDialog.exec = form_preview, archive_preview
+        window.archived_inventory()
+    finally:
+        Form.exec, QDialog.exec = old_form, old_dialog
+        window.data = original
+        window.refresh()
