@@ -123,6 +123,14 @@ class ContextMenus:
             menu.addAction(title).triggered.connect(lambda checked=False, callback=fn: callback())
         return menu
 
+    def add_map_move_actions(self, menu):
+        # Fresh menu actions avoid Qt transferring/deleting the map's shortcut
+        # actions when a dynamic menu is cleared or a context menu is destroyed.
+        for source in (self.map.undo_action, self.map.redo_action):
+            action = menu.addAction(source.text() + "\t" + source.shortcut().toString())
+            action.setEnabled(self.allowed("admin") and source.isEnabled())
+            action.triggered.connect(lambda checked=False, source=source: source.trigger())
+
     def map_menu(self, block_id, position):
         menu = QMenu(self.map)
 
@@ -145,6 +153,8 @@ class ContextMenus:
             add("Crear fila desde aquí", lambda: self.start_block_row(position), "admin")
         menu.addSeparator()
         add("Ajustar vista", self.map.fit)
+        menu.addSeparator()
+        self.add_map_move_actions(menu)
         return menu
 
     def show_map_menu(self, block_id, position, global_position):

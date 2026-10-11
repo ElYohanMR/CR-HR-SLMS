@@ -1,8 +1,10 @@
+param([string]$ReleaseDirectory = '')
 $ErrorActionPreference = 'Stop'
 $taskProject = Split-Path -Parent $PSScriptRoot
 $taskPython = Join-Path $env:LOCALAPPDATA 'SamtecLockers\venvs\dev\Scripts\python.exe'
 $taskBuild = Join-Path $env:LOCALAPPDATA 'SamtecLockers\build'
 $taskRelease = Join-Path $env:LOCALAPPDATA 'SamtecLockers\release'
+if ($ReleaseDirectory) { $taskRelease = $ReleaseDirectory }
 $taskOriginalPath = $env:PATH
 # Keep bundled tool runtimes from supplying incompatible Windows CRT DLLs.
 $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -notmatch 'codex-runtimes' }) -join ';'

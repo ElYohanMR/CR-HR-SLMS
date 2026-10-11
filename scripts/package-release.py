@@ -9,13 +9,15 @@ from pathlib import Path
 import shutil
 import subprocess
 from zipfile import ZipFile, ZIP_DEFLATED
+from slms import __version__
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--preview-profile", type=Path, required=True)
+parser.add_argument("--release", type=Path)
 args = parser.parse_args()
 project = Path(__file__).resolve().parent.parent
-release = Path(os.environ["LOCALAPPDATA"]) / "SamtecLockers/release/SamtecLockers"
+release = args.release or Path(os.environ["LOCALAPPDATA"]) / "SamtecLockers/release/SamtecLockers"
 assert (release / "SamtecLockers.exe").is_file()
 assert json.loads((args.preview_profile / "self-test.json").read_text())["ok"]
 args.output.mkdir(parents=True, exist_ok=True)
@@ -27,7 +29,7 @@ for source, target in (
 ):
     shutil.copy2(project / source, release / target)
 (release / "LEEME.md").write_text(
-    "# Samtec Lockers 1.9.0\n\n"
+    f"# Samtec Lockers {__version__}\n\n"
     "Extrae toda esta carpeta y abre SamtecLockers.exe. Conserva _internal junto al ejecutable.\n\n"
     "El primer arranque permite configurar PostgreSQL, conectar al servidor de TI o usar una demostración. "
     "Introduce las contraseñas directamente en el asistente. Configurar conexion.cmd vuelve a abrirlo.\n\n"
@@ -80,6 +82,8 @@ for name in (
     "conflictos",
     "seleccion-multiple",
     "eliminacion-definitiva",
+    "mapa-deshacer",
+    "mapa-deshacer-menu",
 ):
     shutil.copy2(args.preview_profile / (name + ".png"), args.output / ("Samtec-Lockers-" + name + ".png"))
 shutil.copy2(project / "docs/OPERACION.md", args.output / "Samtec-Lockers-Guia-de-uso.md")

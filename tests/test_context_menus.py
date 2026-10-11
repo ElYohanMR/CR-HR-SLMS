@@ -168,6 +168,33 @@ def test_map_block_edit_and_delete_use_clicked_block(window, monkeypatch):
     assert calls == [("edit", block["id"]), ("block", block["id"])]
 
 
+def test_map_undo_actions_survive_menu_refresh_and_end_at_save(window, monkeypatch):
+    from PySide6.QtCore import QPointF
+
+    view = window.map
+    view.set_editing(True)
+    item = view.block_items[0]
+    original = QPointF(item.pos())
+    item.setPos(original + QPointF(2, 1))
+    view.record_move(item, original)
+    menu = window.map_menu(item.data["id"], [0, 0])
+    assert any(a.text().startswith("Deshacer") and a.isEnabled() for a in menu.actions())
+    options = next(b for b in window.findChildren(QPushButton) if b.text() == "Opciones del mapa").menu()
+    for _ in range(2):
+        options.aboutToShow.emit()
+        assert any(a.text().startswith("Deshacer") and a.isEnabled() for a in options.actions())
+    view.undo_action.trigger()
+    assert not view.dirty
+    view.redo_action.trigger()
+    sent = []
+    monkeypatch.setattr(window, "submit", lambda *args: sent.append(args))
+    monkeypatch.setattr("slms.window.info", lambda *args: None)
+    window.save_map()
+    assert len(sent) == 1 and sent[0][0] == "block.update"
+    assert (sent[0][1]["x"], sent[0][1]["y"]) == tuple(view.from_scene(item.pos()))
+    assert not view.undo_action.isEnabled() and not view.redo_action.isEnabled()
+
+
 @pytest.mark.parametrize("columns", [3, 4])
 def test_block_grid_right_to_left_preserves_record_identity(window, monkeypatch, columns):
     block = window.data["blocks"][0]

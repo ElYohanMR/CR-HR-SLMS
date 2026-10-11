@@ -459,7 +459,7 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         self.save_map_button = self.button(row, "Guardar posiciones", self.save_map)
         layout.addLayout(row)
         row = QHBoxLayout()
-        self.actions_button(row, [
+        map_options = self.actions_button(row, [
             ("Nuevo bloque", self.block_form, "admin"),
             ("Crear fila de bloques", self.start_block_row, "admin"),
             ("Nuevo plano", self.plan_form, "admin"),
@@ -470,6 +470,13 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         row.addWidget(QLabel("Clic derecho: acciones del bloque o crear uno en ese lugar."), 1)
         layout.addLayout(row)
         self.map = MapView()
+
+        def add_move_actions():
+            menu = map_options.menu()
+            menu.addSeparator()
+            self.add_map_move_actions(menu)
+
+        map_options.menu().aboutToShow.connect(add_move_actions)
         search_row = QHBoxLayout()
         self.map_search = QLineEdit()
         self.map_search.setPlaceholderText("Código del bloque o número de casillero · Enter para buscar")

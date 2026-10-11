@@ -146,3 +146,24 @@ La distribución inicial tuvo una incompatibilidad de DLL detectada durante la p
 - Revisión visual del asistente, acceso, resumen, mapa e inventario.
 - Prueba de regresión con paleta oscura y cambio entre los tres tipos de conexión.
 - Las 21 pruebas de la suite local pasan. Las 20 pruebas de PostgreSQL de la versión inicial se conservan; esta actualización no cambia el esquema ni la lógica de asignaciones.
+
+## Actualización 1.10 · 11 de octubre de 2026
+
+- Suite completa: **126 pruebas** superadas con SQLite y Qt. Revisión estática sin errores.
+- Regresión reproducida antes de corregir: el borde cosmético del bloque extendía
+  su área invisible y capturaba clics del vecino. Pruebas de rotaciones 0°, 10°,
+  11°, 45°, 90° y −10°, tres niveles de zoom, bordes, fondo y halo de búsqueda.
+- Comprobación adicional con la geometría del inventario facilitado por el usuario:
+  118 bloques y 1.416 casilleros, 3.186 posiciones y 6.372 clics de consulta/contexto
+  correctos. El Excel se leyó sin modificaciones y no se importó a la base de datos.
+- Deshacer/rehacer probado con arrastres reales de bloques y contornos, atajo de
+  teclado, vuelta a la posición inicial, nueva rama de movimientos, refresco y
+  guardado. Cada arrastre corresponde a una sola acción; no genera solicitudes
+  hasta pulsar Guardar posiciones.
+- No cambia el esquema de datos ni la lógica del servidor. No se repitieron las
+  pruebas PostgreSQL de la entrega anterior para esta modificación de interfaz.
+- Ejecutable 1.10 compilado y comprobado en un perfil temporal independiente:
+  selección de etiquetas próximas, deshacer/rehacer, pantallas, inicio del
+  servidor, autenticación y baja atómica con aviso simulado sin duplicados.
+  Capturas del mapa y su menú revisadas visualmente. La aplicación abierta del
+  usuario y su servicio no se detuvieron; se entregó una carpeta de versión nueva.

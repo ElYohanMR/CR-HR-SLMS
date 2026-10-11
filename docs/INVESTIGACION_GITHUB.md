@@ -94,4 +94,17 @@ Como criterio propio, conservar cuentas individuales y eliminación recuperable.
 
 ## Alcance de esta entrega
 
-Se entregan hallazgos y propuestas. No se ha cambiado el funcionamiento de Samtec Lockers, instalado productos externos, enviado información de empleados a demos ni conectado servicios corporativos.
+La entrega original de investigación incluyó hallazgos y propuestas, sin instalar
+productos externos ni enviar información de empleados a demostraciones.
+
+## Avance de las recomendaciones · 11 de octubre de 2026
+
+- Editor de filas, recorridos de verificación física y revisión de conflictos:
+  incorporados en las versiones posteriores a la investigación.
+- Deshacer y rehacer movimientos de bloques y contornos antes de guardarlos:
+  incorporado en 1.10, junto con la corrección de clics en etiquetas próximas y rotadas.
+- Próxima prioridad propuesta: vista previa de conciliación de empleados con una
+  lista autorizada de HR. Debe distinguir altas, cambios y bajas confirmadas; la
+  ausencia de una persona en un archivo parcial no debe desactivarla automáticamente.
+- Continúan pendientes las etiquetas QR, constancias de entrega, campos
+  configurables, vistas guardadas y alineación/rotación colectiva de bloques.

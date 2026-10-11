@@ -212,6 +212,7 @@ class Workflows:
         self.nav.setCurrentRow(1)
         self.map.hide_card()
         self.map.editing = True  # Keep automatic refresh from discarding the picked points.
+        self.map.moves.clear()
         self.map.picking_row = True
         self.map.row_start = position
         self.map.setToolTip("Marca el inicio y el final de la fila. Clic derecho para cancelar.")

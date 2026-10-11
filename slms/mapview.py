@@ -1,7 +1,19 @@
 import base64
 import copy
 from PySide6.QtCore import Qt, QPointF, Signal, QVariantAnimation, QEasingCurve
-from PySide6.QtGui import QPixmap, QPen, QColor, QBrush, QPolygonF, QFont, QPainter
+from PySide6.QtGui import (
+    QPixmap,
+    QPen,
+    QColor,
+    QBrush,
+    QPolygonF,
+    QFont,
+    QPainter,
+    QPainterPath,
+    QUndoStack,
+    QUndoCommand,
+    QKeySequence,
+)
 from PySide6.QtWidgets import (
     QGraphicsView,
     QGraphicsScene,
@@ -33,6 +45,28 @@ def block_status(lockers, occupied):
     return available, assigned, "#946200", "Sin disponibles · requiere revisión"
 
 
+class SearchHalo(QGraphicsRectItem):
+    """Paint-only decoration: it must never obscure another item's hit shape."""
+
+    def shape(self):
+        return QPainterPath()
+
+    def contains(self, point):
+        return False
+
+
+class MoveItem(QUndoCommand):
+    def __init__(self, item, before, after):
+        super().__init__("movimiento de bloque" if isinstance(item, BlockItem) else "movimiento de contorno")
+        self.item, self.before, self.after = item, QPointF(before), QPointF(after)
+
+    def undo(self):
+        self.item.setPos(self.before)
+
+    def redo(self):
+        self.item.setPos(self.after)
+
+
 class BlockItem(QGraphicsRectItem):
     def __init__(self, block, color, status, size, view):
         super().__init__(-size / 2, -size / 2, size, size)
@@ -45,6 +79,7 @@ class BlockItem(QGraphicsRectItem):
         self.setPos(view.to_scene([block["x"], block["y"]]))
         self.setRotation(block["rotation"])
         self.caption = QGraphicsSimpleTextItem(block["label"], self)
+        self.caption.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
         font = QFont("Segoe UI")
         # Shape text at a normal font size, then scale its geometry. Sub-point
         # fonts round glyph widths on Windows and lose digits at high zoom.
@@ -61,17 +96,35 @@ class BlockItem(QGraphicsRectItem):
             f"{block['label']} · {status}\nAcerca el mapa para leer etiquetas próximas. Clic para consultar."
         )
         self.setZValue(5)
-        self.halo = QGraphicsRectItem(self.rect().adjusted(-size * 0.3, -size * 0.3, size * 0.3, size * 0.3), self)
+        self.halo = SearchHalo(self.rect().adjusted(-size * 0.3, -size * 0.3, size * 0.3, size * 0.3), self)
         halo_pen = QPen(QColor("#1685ff"), 3)
         halo_pen.setCosmetic(True)
         self.halo.setPen(halo_pen)
         self.halo.setBrush(Qt.BrushStyle.NoBrush)
         self.halo.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
         self.halo.hide()
+        self.drag_start = None
+
+    def shape(self):
+        # Qt's default rect shape expands a cosmetic 1.5-pixel pen by 1.5
+        # *scene units*. At close zoom that invisible area steals neighbour
+        # clicks. Use the label geometry; Qt applies rotation and view zoom.
+        path = QPainterPath()
+        path.addRect(self.rect())
+        return path
+
+    def contains(self, point):
+        return self.rect().contains(point)
 
     def mousePressEvent(self, event):
+        # QGraphicsView can nominate a neighbour touched by the mouse pixel's
+        # rectangle. Let Qt try the next item unless the actual point is inside.
+        if not self.contains(event.pos()):
+            event.ignore()
+            return
         if event.button() == Qt.MouseButton.LeftButton:
             self.view.stop_highlight()
+            self.drag_start = QPointF(self.pos()) if self.view.editing else None
         if not self.view.editing and event.button() == Qt.MouseButton.LeftButton:
             event.accept()
         else:
@@ -79,6 +132,9 @@ class BlockItem(QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton and self.drag_start is not None:
+            self.view.record_move(self, self.drag_start)
+            self.drag_start = None
         if not self.view.editing and event.button() == Qt.MouseButton.LeftButton:
             self.view.show_card(self.data["id"])
 
@@ -86,7 +142,12 @@ class BlockItem(QGraphicsRectItem):
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.scene():
             return QPointF(max(0, min(1000, value.x())), max(0, min(self.view.map_height, value.y())))
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene():
-            self.view.dirty[self.data["id"]] = tuple(self.view.from_scene(self.pos()))
+            position = tuple(self.view.from_scene(self.pos()))
+            original = (round(self.data["x"], 2), round(self.data["y"], 2))
+            if position == original:
+                self.view.dirty.pop(self.data["id"], None)
+            else:
+                self.view.dirty[self.data["id"]] = position
         return super().itemChange(change, value)
 
 
@@ -101,6 +162,18 @@ class Vertex(QGraphicsEllipseItem):
             QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
         )
         self.setZValue(10)
+        self.drag_start = None
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_start = QPointF(self.pos())
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton and self.drag_start is not None:
+            self.view.record_move(self, self.drag_start)
+            self.drag_start = None
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
@@ -134,6 +207,17 @@ class MapView(QGraphicsView):
         self.selected_block = None
         self.details = {}
         self.highlighted_block = None
+        self.moves = QUndoStack(self)
+        self.moves.setUndoLimit(100)
+        self.undo_action = self.moves.createUndoAction(self, "Deshacer")
+        self.redo_action = self.moves.createRedoAction(self, "Rehacer")
+        for action, shortcut in (
+            (self.undo_action, QKeySequence.StandardKey.Undo),
+            (self.redo_action, QKeySequence.StandardKey.Redo),
+        ):
+            action.setShortcuts(QKeySequence.keyBindings(shortcut))
+            action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+            self.addAction(action)
         self.pulse = QVariantAnimation(self)
         self.pulse.setDuration(2000)
         self.pulse.setStartValue(0.12)
@@ -169,6 +253,20 @@ class MapView(QGraphicsView):
     def from_scene(self, point):
         return [round(point.x(), 2), round(point.y() * 1000 / self.map_height, 2)]
 
+    def record_move(self, item, before):
+        if self.editing and not self.picking_row and before != item.pos():
+            self.moves.push(MoveItem(item, before, item.pos()))
+
+    def block_at(self, point):
+        # Respect paint stacking, but exclude captions, halos and cosmetic pen
+        # padding. Checking local coordinates also handles rotated labels.
+        for item in self.scene().items(
+            point, Qt.ItemSelectionMode.IntersectsItemShape, Qt.SortOrder.DescendingOrder, self.transform()
+        ):
+            if isinstance(item, BlockItem) and item.contains(item.mapFromScene(point)):
+                return item
+        return None
+
     def contextMenuEvent(self, event):
         if self.picking_row:
             self.picking_row = False
@@ -179,9 +277,7 @@ class MapView(QGraphicsView):
         if not self.plan or not self.sceneRect().contains(point):
             event.ignore()
             return
-        item = self.itemAt(event.pos())
-        while item is not None and not isinstance(item, BlockItem):
-            item = item.parentItem()
+        item = self.block_at(point)
         self.contextRequested.emit(item.data["id"] if item else "", self.from_scene(point), event.globalPos())
         event.accept()
 
@@ -226,6 +322,8 @@ class MapView(QGraphicsView):
         self.stop_highlight()
         selected = self.selected_block if self.plan and self.plan["id"] == plan_id else None
         self.hide_card()
+        # Commands reference graphics items; release them before clearing scene.
+        self.moves.clear()
         self.scene().clear()
         self.dirty, self.block_items, self.vertices, self.details, self.shapes = {}, [], [], {}, []
         self.plan = next((p for p in snapshot.get("plans", []) if p["id"] == plan_id), None)
@@ -316,6 +414,8 @@ class MapView(QGraphicsView):
 
     def set_editing(self, value):
         self.editing = value
+        if not value:
+            self.moves.clear()
         if value:
             self.hide_card()
         for item in self.block_items:

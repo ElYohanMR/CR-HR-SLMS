@@ -166,3 +166,18 @@ Las copias centrales no incluyen solicitudes que permanecen solo en equipos desc
 ## Correo
 
 Historial → Ver notificaciones muestra los avisos simulados para empleados con correo. No se envía ningún correo real. TI deberá suministrar la integración corporativa y confirmar el remitente.
+## Mapa: selección precisa y movimientos reversibles · 1.10
+
+Los clics y el clic derecho corresponden al cuadrado visible del bloque, incluida
+su rotación. El halo azul de búsqueda no captura clics destinados al bloque vecino.
+El tamaño de las etiquetas respecto al plano se conserva al acercar o alejar.
+
+En **Editar mapa**, cada arrastre de un bloque o de un punto del contorno puede
+deshacerse desde **Opciones del mapa → Deshacer** o desde el menú de clic derecho.
+Con el foco en el mapa, **Ctrl+Z** deshace y **Ctrl+Y** rehace. Se conservan hasta
+100 movimientos de la sesión de edición. Volver a la posición original quita ese
+bloque de los cambios pendientes de guardar.
+
+Estas acciones afectan solamente movimientos sin guardar. Guardar posiciones,
+salir de edición, recargar/cambiar el plano o iniciar una fila termina ese historial
+local. No deshacen solicitudes enviadas, asignaciones ni eliminaciones.
