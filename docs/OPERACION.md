@@ -1,5 +1,32 @@
 # Guía de operación
 
+## Ventana de opciones · 1.11
+
+El botón **Opciones** abre una ventana con categorías a la izquierda. El menú
+anterior se conserva en **Acciones**. Las preferencias pertenecen a la cuenta
+que inició sesión y a este equipo; no modifican datos existentes ni se envían
+como solicitudes al servidor.
+
+- **Apariencia:** tamaño del texto y controles: 90%, 100%, 110%, 125% o 150%.
+  Si el contenido no cabe, puedes desplazarte con las barras de la ventana.
+  Los bloques mantienen su tamaño respecto al mapa.
+- **Mapa:** imagen satelital o solo contornos y bloques. Conserva coordenadas,
+  proporciones, zoom, movimientos pendientes y Deshacer/Rehacer.
+- **Bloques y filas:** edificio, lado, interior/exterior, filas, columnas,
+  rotación, prefijo y cantidad de bloques de una fila. Valores iniciales: 4×3
+  casilleros y 10° de rotación. El plano y posición provienen del mapa actual.
+- **Empleados:** departamento, turno, estado activo y notas iniciales. El ID,
+  nombre, apellidos y correo se completan individualmente.
+
+Los predeterminados son sugerencias editables: con 10° configurados puedes
+crear un bloque o una fila con 12° sin cambiar la preferencia. Editar un registro
+existente muestra sus datos guardados. La importación de Excel conserva los
+valores del archivo.
+
+**Aplicar** guarda y aplica sin cerrar. **Aceptar** guarda y cierra. **Cancelar**
+descarta lo modificado desde el último Aplicar. **Restaurar valores iniciales**
+rellena la ventana con los originales; debes Aplicar o Aceptar para guardarlos.
+
 ## Marcar varias filas
 
 Todas las tablas tienen casillas junto al primer dato de cada fila. Puedes marcar varias sin mantener pulsado Ctrl. Clic derecho permite **Marcar todas las filas visibles**, **Desmarcar todas las filas visibles** y **Copiar filas marcadas**. Las marcas se conservan al ordenar o sincronizar por identificador; una fila que desaparece por un filtro queda desmarcada. La fila resaltada y las casillas son selecciones independientes: las acciones individuales siguen usando la fila pulsada.

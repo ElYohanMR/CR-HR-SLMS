@@ -247,12 +247,14 @@ class Workflows:
         form = Form(
             "Crear fila de bloques",
             fields,
-            {"count": 4, "prefix": "N", "first_label": "01", "rows": 4, "columns": 3},
+            {**self.new_block_defaults(), "first_label": "01"},
             self,
             description="Los bloques se distribuyen entre ambos puntos. Los existentes conservan su numeración y lado registrado; restaura primero los eliminados. El lado elegido se aplica a los nuevos. Numeración de derecha a izquierda y de arriba hacia abajo.",
             accept_label="Vista previa",
         )
         form.widgets["count"].setRange(1, 200)
+        form.widgets["count"].setValue(self.preferences["block"]["count"])
+        form.widgets["rotation"].setRange(-360, 360)
         while form.exec() == QDialog.DialogCode.Accepted:
             try:
                 operations = plan_row(self.data, plan_id, start, end, form.values())
@@ -277,6 +279,7 @@ class Workflows:
             for i, op in enumerate(operations):
                 data["blocks"].append(dict(op["payload"], id=op["payload"].get("id", f"preview-row-{i}"), version=1))
             view = MapView()
+            view.set_satellite(self.preferences["satellite"])
             view.render(data, plan_id)
             layout.addWidget(view, 2)
             table = self.table(layout, ["Bloque", "Acción", "Lado", "Desde", "Hasta", "X", "Y"])

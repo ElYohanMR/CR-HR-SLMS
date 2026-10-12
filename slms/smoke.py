@@ -185,6 +185,8 @@ def run(app):
     capture_workflows(window, engine, session)
     from .smoke_map import capture_map
     capture_map(window)
+    from .smoke_preferences import capture_preferences
+    capture_preferences(window)
     window.synced(
         {"state": "sesion", "message": "Sesión vencida. Inicia sesión para enviar las solicitudes guardadas."}
     )

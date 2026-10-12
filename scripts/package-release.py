@@ -84,6 +84,12 @@ for name in (
     "eliminacion-definitiva",
     "mapa-deshacer",
     "mapa-deshacer-menu",
+    "opciones-apariencia",
+    "opciones-mapa",
+    "opciones-bloques",
+    "opciones-empleados",
+    "opciones-125",
+    "mapa-contornos",
 ):
     shutil.copy2(args.preview_profile / (name + ".png"), args.output / ("Samtec-Lockers-" + name + ".png"))
 shutil.copy2(project / "docs/OPERACION.md", args.output / "Samtec-Lockers-Guia-de-uso.md")

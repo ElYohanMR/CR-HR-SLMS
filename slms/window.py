@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QMenu,
+    QScrollArea,
 )
 from .forms import Form, info, confirm
 from .local import LocalStore
@@ -37,6 +38,7 @@ from .tableview import enable_sorting, fill_table
 from .contextmenus import ContextMenus
 from .workflows import Workflows
 from .inventory_selection import InventorySelection
+from .preferences import Preferences
 
 
 STATES = {
@@ -97,11 +99,12 @@ def csv_safe(value):
     return "'" + text if text.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
-class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
+class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWindow):
     def __init__(self, config, session, store=None):
         super().__init__()
         self.config, self.session = config, session
         self.store = store or LocalStore(installation=config.get("installation", "default"))
+        self.load_preferences()
         self.data = self.store.get("snapshot") or {
             key: []
             for key in (
@@ -124,7 +127,10 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         self.setMinimumSize(1080, 720)
         self.setStyleSheet(STYLE)
         root = QWidget()
-        self.setCentralWidget(root)
+        self.interface_scroll = QScrollArea()
+        self.interface_scroll.setWidgetResizable(True)
+        self.interface_scroll.setWidget(root)
+        self.setCentralWidget(self.interface_scroll)
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
@@ -135,9 +141,12 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         self.button(top, "Salir de la cuenta", self.logout)
         self.options_button = QPushButton("Opciones")
         self.options_menu = QMenu(self.options_button)
-        self.options_button.setMenu(self.options_menu)
+        self.options_button.clicked.connect(self.settings_dialog)
+        shortcuts_button = QPushButton("Acciones")
+        shortcuts_button.setMenu(self.options_menu)
         self.options_menu.aboutToShow.connect(self.populate_options)
         top.addWidget(self.options_button)
+        top.addWidget(shortcuts_button)
         outer.addWidget(header)
         content = QWidget()
         content_layout = QVBoxLayout(content)
@@ -174,6 +183,7 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         self.make_admin()
         self.nav.setCurrentRow(0)
         self.refresh()
+        self.apply_preferences()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.sync)
         self.timer.start(10000)
@@ -210,6 +220,7 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table.verticalHeader().setVisible(False)
+        table.verticalHeader().setDefaultSectionSize(round(30 * getattr(self, "preferences", {}).get("ui_scale", 100) / 100))
         enable_sorting(table)
         if self is not None:
             table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -264,6 +275,8 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
             action.triggered.connect(lambda checked=False: callback())
             action.setEnabled(enabled)
 
+        add(self.options_menu, "Opciones de la aplicación…", self.settings_dialog)
+        self.options_menu.addSeparator()
         connection = self.options_menu.addMenu("Conexión y solicitudes")
         add(connection, "Iniciar sesión / cambiar cuenta", self.relogin)
         add(connection, "Sincronizar ahora", self.sync)
@@ -392,6 +405,8 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
         session = login(self.config, self)
         if session:
             self.session = session
+            self.load_preferences()
+            self.apply_preferences()
             self.refresh()
             self.sync()
 
@@ -728,11 +743,13 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
             "Editar bloque" if block else "Nuevo bloque",
             fields,
             block
-            or {"x": position[0] if position else 500, "y": position[1] if position else 500,
-                "rows": 4, "columns": 3, "label": "S01", "plan_id": plan_id or self.plan_combo.currentData()},
+            or {**{k: v for k, v in self.new_block_defaults().items() if k not in ("prefix", "count")},
+                "x": position[0] if position else 500, "y": position[1] if position else 500,
+                "label": self.preferences["block"]["prefix"] + "01", "plan_id": plan_id or self.plan_combo.currentData()},
             self,
             description="Los casilleros nuevos quedan pendientes de verificación física. La numeración avanza de derecha a izquierda, fila por fila de arriba hacia abajo. La columna 1 está a la derecha.",
         )
+        form.widgets["rotation"].setRange(-360, 360)
         if form.exec() != QDialog.DialogCode.Accepted:
             return
         payload = form.values()
@@ -854,7 +871,7 @@ class Window(InventorySelection, Workflows, ContextMenus, QMainWindow):
             ("active", "Activo", "bool"),
             ("notes", "Notas", "text"),
         ]
-        form = Form("Editar empleado" if item else "Nuevo empleado", fields, item or {"active": True}, self)
+        form = Form("Editar empleado" if item else "Nuevo empleado", fields, item or dict(self.preferences["employee"]), self)
         if item and item["active"]:
             form.widgets["active"].setEnabled(False)
             form.widgets["active"].setToolTip("Para registrar una salida utiliza Dar de baja y liberar.")

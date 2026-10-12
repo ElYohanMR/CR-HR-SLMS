@@ -207,6 +207,8 @@ class MapView(QGraphicsView):
         self.selected_block = None
         self.details = {}
         self.highlighted_block = None
+        self.satellite = True
+        self.background_item = None
         self.moves = QUndoStack(self)
         self.moves.setUndoLimit(100)
         self.undo_action = self.moves.createUndoAction(self, "Deshacer")
@@ -249,6 +251,11 @@ class MapView(QGraphicsView):
 
     def to_scene(self, point):
         return QPointF(point[0], point[1] * self.map_height / 1000)
+
+    def set_satellite(self, visible):
+        self.satellite = bool(visible)
+        if self.background_item is not None:
+            self.background_item.setVisible(self.satellite)
 
     def from_scene(self, point):
         return [round(point.x(), 2), round(point.y() * 1000 / self.map_height, 2)]
@@ -324,6 +331,7 @@ class MapView(QGraphicsView):
         self.hide_card()
         # Commands reference graphics items; release them before clearing scene.
         self.moves.clear()
+        self.background_item = None
         self.scene().clear()
         self.dirty, self.block_items, self.vertices, self.details, self.shapes = {}, [], [], {}, []
         self.plan = next((p for p in snapshot.get("plans", []) if p["id"] == plan_id), None)
@@ -337,6 +345,8 @@ class MapView(QGraphicsView):
                 self.map_height = 1000 * pix.height() / pix.width()
                 item = self.scene().addPixmap(pix)
                 item.setScale(1000 / pix.width())
+                self.background_item = item
+                item.setVisible(self.satellite)
         self.setSceneRect(0, 0, 1000, self.map_height)
         self.shapes = copy.deepcopy(self.plan["polygons"])
         buildings = {b["id"]: b for b in snapshot.get("buildings", [])}

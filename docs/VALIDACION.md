@@ -167,3 +167,20 @@ La distribución inicial tuvo una incompatibilidad de DLL detectada durante la p
   servidor, autenticación y baja atómica con aviso simulado sin duplicados.
   Capturas del mapa y su menú revisadas visualmente. La aplicación abierta del
   usuario y su servicio no se detuvieron; se entregó una carpeta de versión nueva.
+
+## Actualización 1.11 · 12 de octubre de 2026
+
+- 133 pruebas completas superadas con SQLite y Qt; revisión estática sin errores.
+- Preferencias independientes por cuenta y equipo: Aplicar, Aceptar, Cancelar,
+  restauración sin guardar, persistencia, valores inválidos y fallo de escritura.
+- Autocompletado de bloques y filas con 10°, modificación individual a 12°,
+  cantidades superiores a 12 bloques por fila y edificios ya no disponibles.
+- Empleados: valores iniciales editables y conservación de fichas existentes;
+  no se rellenan identificadores, nombres ni correos a partir de las preferencias.
+- Vista satelital/contornos y escala 90–150% conservan geometría, zoom, posiciones
+  pendientes e historial local de Deshacer/Rehacer. Ninguna preferencia crea una
+  solicitud ni modifica los datos del servidor.
+- Revisión visual de categorías de opciones, ampliación al 125% y mapa de
+  contornos con datos ficticios. Sin cambios en el esquema de PostgreSQL.
+- Ejecutable 1.11 validado en un perfil aislado: ventana de opciones, persistencia,
+  restauración, mapa, autenticación, servidor y avisos simulados sin duplicados.

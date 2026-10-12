@@ -1,5 +1,7 @@
 """Shared Samtec-inspired desktop theme, independent of the Windows color mode."""
 
+import re
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPalette, QPixmap
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
@@ -60,6 +62,14 @@ QScrollArea#formScroll { background:transparent; border:0; }
 """.replace("@CHEVRON@", asset("chevron-down.svg").as_posix()).replace(
     "@SORT_UP@", asset("sort-up.svg").as_posix()
 ).replace("@SORT_DOWN@", asset("sort-down.svg").as_posix())
+
+
+def scaled_style(percent=100):
+    # Scale controls and text, never map scene geometry.
+    factor = percent / 100
+    def scale_rule(match):
+        return match[1] + re.sub(r"(\d+)px", lambda n: f"{max(1, round(int(n[1]) * factor))}px", match[2])
+    return re.sub(r"(font-size\s*:|padding\s*:|spacing\s*:)([^;\n}]+)", scale_rule, STYLE)
 
 
 def apply_theme(app):
