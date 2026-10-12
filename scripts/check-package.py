@@ -70,6 +70,35 @@ try:
         employee = snapshot["employees"][0]
         assignment = next(a for a in snapshot["assignments"] if a["ended_at"] is None)
         locker = next(item for item in snapshot["lockers"] if item["id"] == assignment["locker_id"])
+        # The standalone server has no QApplication; verify JPEG decoding and private retrieval there.
+        import base64
+        from PySide6.QtCore import QBuffer, QIODevice
+        from PySide6.QtGui import QImage
+        cut = request("cut.create", {"employee_id": employee["id"], "locker_id": locker["id"],
+                                    "supervisor": "Prueba aislada", "reason": "Validar ejecutable",
+                                    "channel": "otro"},
+                      {"employee:" + employee["id"]: employee["version"], "locker:" + locker["id"]: locker["version"]})
+        result = client.post("/commands", json=cut).json()
+        assert result["status"] == "confirmada", result
+        cut_id = result["target_id"]
+        def cut_step(action, payload):
+            item = next(c for c in client.get("/snapshot").json()["cut_requests"] if c["id"] == cut_id)
+            command = request(action, dict(payload, id=cut_id), {"cut_request:" + cut_id: item["version"]})
+            result = client.post("/commands", json=command).json()
+            assert result["status"] == "confirmada", result
+        cut_step("cut.assign", {"assignee": "Seguridad de prueba"})
+        image = QImage(100, 60, QImage.Format.Format_RGB32)
+        image.fill(0xFF336699)
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        assert image.save(buffer, "JPG")
+        data = bytes(buffer.data())
+        cut_step("cut.evidence", {"kind": "identidad", "filename": "PRUEBA-FICTICIA.jpg",
+                                  "photo": base64.b64encode(data).decode()})
+        evidence = next(e for e in client.get("/snapshot").json()["cut_evidence"] if e["request_id"] == cut_id)
+        assert client.get("/cuts/evidence/" + evidence["id"]).content == data
+        assert client.get("/cuts/" + cut_id + "/history").status_code == 200
+        cut_step("cut.cancel", {"reason": "Finalizó la prueba aislada del servidor."})
         departure = request(
             "employee.deactivate",
             {
@@ -88,7 +117,7 @@ try:
         notices = [n for n in snapshot["notifications"] if n["command_id"] == departure["id"]]
         assert len(notices) == 1 and notices[0]["recipient"] == "hr@example.com"
         assert notices[0]["status"] == "simulado"
-        print("PASS: executable interface, server, authentication, atomic departure and unique simulated HR notice.")
+        print("PASS: executable interface, server, authentication, padlock cuts, original JPEG evidence, case history, atomic departure and unique simulated HR notice.")
         print("Preview profile: " + str(profile))
 finally:
     process.terminate()

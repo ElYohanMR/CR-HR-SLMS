@@ -25,6 +25,8 @@ from .models import (
     MailSettings,
     InspectionRound,
     InspectionEntry,
+    CutRequest,
+    CutEvidence,
     now,
     record,
 )
@@ -138,7 +140,7 @@ def create_app(engine, installation="test", demo=False):
         with sessions() as db:
             if engine.dialect.name == "postgresql":
                 db.execute(text("SELECT pg_advisory_xact_lock(731962401)"))
-            result = {"at": now(), "demo": demo, "features": {"inspections": True, "inventory_batch": True}}
+            result = {"at": now(), "demo": demo, "features": {"inspections": True, "inventory_batch": True, "padlock_cuts": True}}
             for name, model in (
                 ("buildings", Building),
                 ("plans", Plan),
@@ -152,6 +154,7 @@ def create_app(engine, installation="test", demo=False):
                 ("mail_settings", MailSettings),
                 ("inspection_rounds", InspectionRound),
                 ("inspection_entries", InspectionEntry),
+                ("cut_requests", CutRequest),
             ):
                 query = select(model)
                 if name in ("audit", "notifications"):
@@ -161,7 +164,32 @@ def create_app(engine, installation="test", demo=False):
                     result["archived_" + name] = [item for item in items if item.get("deleted_at")]
                     items = [item for item in items if not item.get("deleted_at")]
                 result[name] = items
+            from sqlalchemy.orm import defer
+            result["cut_evidence"] = [record(e) for e in db.scalars(select(CutEvidence).options(defer(CutEvidence.content)))]
             return result
+
+    @app.get("/cuts/evidence/{evidence_id}")
+    def cut_evidence(evidence_id: str, authorization: str | None = Header(default=None)):
+        from fastapi.responses import Response
+        if actor(authorization)["role"] not in ("operator", "admin"):
+            raise HTTPException(403, "Las fotografías están disponibles para Recepción, HR y Administración.")
+        with sessions() as db:
+            evidence = db.get(CutEvidence, evidence_id)
+            if evidence is None:
+                raise HTTPException(404, "La evidencia no existe.")
+            return Response(content=evidence.content, media_type=evidence.media_type,
+                            headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+    @app.get("/cuts/{request_id}/history")
+    def cut_history(request_id: str, authorization: str | None = Header(default=None)):
+        from sqlalchemy import or_
+        actor(authorization)
+        with sessions() as db:
+            if db.get(CutRequest, request_id) is None:
+                raise HTTPException(404, "La solicitud no existe.")
+            photos = select(CutEvidence.id).where(CutEvidence.request_id == request_id)
+            return [record(e) for e in db.scalars(select(Audit).where(
+                or_(Audit.target_id == request_id, Audit.target_id.in_(photos))).order_by(Audit.at, Audit.id))]
 
     @app.post("/commands")
     def commands(command: Command, authorization: str | None = Header(default=None)):

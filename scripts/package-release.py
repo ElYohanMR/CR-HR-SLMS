@@ -90,6 +90,9 @@ for name in (
     "opciones-empleados",
     "opciones-125",
     "mapa-contornos",
+    "corte-nueva",
+    "cortes-lista",
+    "corte-expediente",
 ):
     shutil.copy2(args.preview_profile / (name + ".png"), args.output / ("Samtec-Lockers-" + name + ".png"))
 shutil.copy2(project / "docs/OPERACION.md", args.output / "Samtec-Lockers-Guia-de-uso.md")

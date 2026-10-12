@@ -41,7 +41,7 @@ class SyncWorker(QThread):
                     if dependency and statuses.get(dependency) != "confirmada":
                         continue
                     try:
-                        response = client.post("/commands", json=task["command"])
+                        response = client.post("/commands", json=self.store.command_for_send(task))
                         if response.status_code == 401:
                             self.store.require_session(self.session["actor"]["id"])
                             self.store.result(

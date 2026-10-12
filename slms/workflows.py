@@ -92,6 +92,10 @@ class Workflows:
     def correct_conflict(self, item):
         """Open a fresh, explicit form. A rejected command/receipt is immutable."""
         action, p = item["command"]["action"], item["command"]["payload"]
+        if action.startswith("cut."):
+            if action == "cut.create":
+                return self.new_cut()
+            return self.open_cut(p.get("id"))
         if action in ("assignment.assign", "assignment.transfer"):
             return self.employee_assignment(p.get("employee_id"))
         if action == "employee.update":

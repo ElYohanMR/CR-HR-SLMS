@@ -57,3 +57,28 @@ La migración 0002 agrega `mail_settings` y el campo JSON `notifications.cc`, si
 Monitorear /health, espacio libre, proceso y PostgreSQL. application.log rota a 2 MB con tres copias previas. Gestionar también logs del proceso y copias de seguridad desde TI.
 
 Definir con HR conservación de notas, historial y exportaciones. El ejecutable de desarrollo no tiene firma corporativa; TI puede firmarlo al distribuirlo. Revisar las licencias incluidas y la procedencia de la imagen antes de una redistribución externa. Se conserva la atribución de la imagen aportada.
+# Cortes de candado · actualización 1.12
+
+La migración 0006 agrega `cut_requests` y `cut_evidence`. Las fotografías
+originales se almacenan como binarios en la misma base de datos, con tipo,
+tamaño, SHA-256, responsable y fecha de carga. Por tanto, forman parte del
+respaldo PostgreSQL/SQLite; no requieren copiar una carpeta de fotos del servidor.
+No se incluyen sus bytes en el snapshot ni en los eventos de auditoría.
+
+Las operaciones `cut.*` usan la misma cola y transacción idempotente del resto
+de la aplicación. Las fotos pendientes se conservan cifradas mediante DPAPI en
+`queue_photos` del equipo emisor y se incorporan al comando al transmitirlo.
+No están en el respaldo central hasta que el servidor confirme la carga.
+
+`GET /cuts/evidence/{id}` exige sesión y rol operator/admin; no admite
+enlaces públicos. `GET /cuts/{id}/history` devuelve el historial completo del
+expediente para una cuenta autenticada. La cuenta viewer consulta seguimiento,
+sin modificar casos ni descargar fotos. Los límites por foto son 6 MB, 24
+megapíxeles y formato JPG/PNG con decodificación validada.
+
+La recepción del mensaje de Teams/correo y la verificación presencial son tareas
+humanas. La aplicación registra quién las procesó; no conecta con Microsoft ni
+valida automáticamente el contenido o la identidad mostrada en una foto.
+Los expedientes cerrados y evidencias sustituidas se conservan. Cualquier política
+corporativa de retención o eliminación requerirá definir el procedimiento con TI.
+

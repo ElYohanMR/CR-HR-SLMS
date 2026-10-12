@@ -1,5 +1,42 @@
 # Validación de la entrega
 
+## Versión 1.12.0 · 12 de octubre de 2026
+
+- Solicitudes de corte: Solicitada, En proceso, Finalizada y Cancelada; identificación
+  del empleado y casillero al crear, supervisor, canal, motivo, encargado, fecha real,
+  resultado y cuenta que registra cada paso. Las operaciones no cambian asignaciones.
+- Tres evidencias obligatorias y distintas para el cierre: identidad frente al
+  casillero, antes y después del corte. JPG/PNG limitados a 6 MB y 24 megapíxeles.
+  Conservación de originales, huella SHA-256 y fotografías sustituidas con motivo.
+  La aplicación muestra la orientación de la cámara sin reescribir el archivo.
+- Consulta de fotografías autenticada y restringida a Operación/Administración.
+  Los listados e historial no transportan los archivos; la cola local guarda las
+  fotos cifradas aparte de sus metadatos y las incorpora solo al enviar el paso.
+- Una solicitud abierta por casillero, control de versiones entre computadoras,
+  reenvío idempotente después de una respuesta perdida y cierre condicionado a
+  evidencia confirmada, encargado, fecha válida e identidad verificada.
+- Historial completo por expediente; los casos cerrados no se modifican.
+  El inventario con historial de cortes no se puede eliminar definitivamente.
+- Migración 0006 agrega dos tablas. Actualización desde 0005 y ejecución repetida
+  verificadas sin cambios en las tablas preexistentes.
+- Suite general: 147 pruebas aprobadas y una expectativa antigua de cantidad de
+  tablas actualizada para incluir Cortes de candado. Revalidación focalizada:
+  11 pruebas aprobadas; otras 3 aprobadas tras ajustar el indicador de pendientes.
+  Total cubierto: 148 casos. Revisión estática sin errores.
+- PostgreSQL: 16 pruebas aprobadas en clúster temporal, incluidas concurrencia,
+  permisos, fotografías inválidas, pérdida de respuesta, migración y restauración
+  de fotografías y solicitudes desde un respaldo.
+- Revisión visual con datos y tarjetas de color ficticios. No se crearon solicitudes
+  de prueba ni fotografías en la base del usuario.
+- Ejecutable 1.12 verificado en perfil temporal independiente: pantallas, creación,
+  asignación, evidencias PNG y cierre. Servidor del ejecutable probado sin interfaz:
+  JPEG original, recuperación autenticada, historial, cancelación y flujos previos
+  de baja y aviso simulado. No se enviaron correos reales.
+- Respaldo previo de la base local: samtec-20261012-161048-349691.dump. El servidor
+  real sigue en 1.10.0; al reiniciar Windows y abrir el nuevo acceso directo, el
+  servidor 1.12 aplica la migración. La interfaz comprueba esta capacidad antes
+  de habilitar la creación de solicitudes de corte.
+
 ## Versión 1.9.0 · 9 de octubre de 2026
 
 - Casillas en todas las tablas; marcar/desmarcar filas visibles y copiar las marcadas mediante clic derecho. Persistencia por ID al ordenar/refrescar y limpieza al filtrar fuera una fila.

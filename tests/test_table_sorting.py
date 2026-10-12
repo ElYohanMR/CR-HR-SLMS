@@ -77,7 +77,7 @@ def test_all_main_tables_sort_and_refresh_preserves_order(qtbot, system, tmp_pat
     window = Window({"url": "http://127.0.0.1:8765", "mode": "demo"}, session, store)
     qtbot.addWidget(window)
     tables = window.findChildren(QTableWidget)
-    assert len(tables) == 6
+    assert len(tables) == 7
     for table in tables:
         assert table.isSortingEnabled()
         assert table.horizontalHeader().sectionsClickable()

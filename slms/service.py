@@ -78,6 +78,9 @@ def mutate(db, actor, command):
     if action.startswith("inspection."):
         from .inspections import apply_inspection
         return apply_inspection(db, actor, command)
+    if action.startswith("cut."):
+        from .cuts import apply_cut
+        return apply_cut(db, actor, command)
     if action in ("inventory.restore_many", "inventory.purge"):
         from .inventory_batch import apply_batch
         return apply_batch(db, actor, command)

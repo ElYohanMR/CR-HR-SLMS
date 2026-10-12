@@ -1,7 +1,7 @@
 """Atomic restoration and explicit permanent removal of archived inventory."""
 
 from sqlalchemy import select
-from .models import Block, Locker, Assignment, InspectionRound, InspectionEntry, Audit, record
+from .models import Block, Locker, Assignment, InspectionRound, InspectionEntry, CutRequest, Audit, record
 
 
 def apply_batch(db, actor, command):
@@ -69,6 +69,8 @@ def apply_batch(db, actor, command):
         # Avoid database parameter limits for large selections.
         for start in range(0, len(ids), 500):
             chunk = list(ids)[start : start + 500]
+            if db.scalar(select(CutRequest.id).where(CutRequest.locker_id.in_(chunk)).limit(1)):
+                raise RuleError("Hay casilleros con solicitudes de corte. Se conserva su historial; no se borró ningún elemento.")
             if db.scalar(select(Assignment.id).where(Assignment.locker_id.in_(chunk)).limit(1)):
                 raise RuleError(
                     "Hay casilleros con historial de asignaciones. Se conservan como eliminados; no se borró ningún elemento."

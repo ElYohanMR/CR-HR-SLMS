@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Float, ForeignKey, Index, Integer, JSON, String, Text, text
+from sqlalchemy import Boolean, Float, ForeignKey, Index, Integer, JSON, LargeBinary, String, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -173,6 +173,43 @@ class Audit(Base):
     reason: Mapped[str] = mapped_column(Text, default="")
 
 
+class CutRequest(Entity, Base):
+    __tablename__ = "cut_requests"
+    employee_id: Mapped[str] = mapped_column(ForeignKey("employees.id"))
+    locker_id: Mapped[str] = mapped_column(ForeignKey("lockers.id"))
+    reference: Mapped[dict] = mapped_column(JSON)
+    supervisor: Mapped[str] = mapped_column(String(200))
+    reason: Mapped[str] = mapped_column(Text)
+    channel: Mapped[str] = mapped_column(String(30), default="otro")
+    status: Mapped[str] = mapped_column(String(20), default="solicitada")
+    assignee: Mapped[str] = mapped_column(String(200), default="")
+    created_by: Mapped[str] = mapped_column(ForeignKey("administrators.id"))
+    created_at: Mapped[str] = mapped_column(String(40), default=now)
+    assigned_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    performed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    completed_by: Mapped[str | None] = mapped_column(ForeignKey("administrators.id"), nullable=True)
+    identity_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    result: Mapped[str] = mapped_column(Text, default="")
+    __table_args__ = (Index("uq_open_cut_locker", "locker_id", unique=True,
+                           sqlite_where=text("status IN ('solicitada', 'en_proceso')"),
+                           postgresql_where=text("status IN ('solicitada', 'en_proceso')")),)
+
+
+class CutEvidence(Entity, Base):
+    __tablename__ = "cut_evidence"
+    request_id: Mapped[str] = mapped_column(ForeignKey("cut_requests.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    filename: Mapped[str] = mapped_column(String(240))
+    media_type: Mapped[str] = mapped_column(String(30))
+    sha256: Mapped[str] = mapped_column(String(64))
+    size: Mapped[int] = mapped_column(Integer)
+    content: Mapped[bytes] = mapped_column(LargeBinary)
+    current: Mapped[bool] = mapped_column(Boolean, default=True)
+    uploaded_by: Mapped[str] = mapped_column(ForeignKey("administrators.id"))
+    uploaded_at: Mapped[str] = mapped_column(String(40), default=now)
+
+
 class Notification(Base):
     __tablename__ = "notifications"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -192,4 +229,5 @@ class MailSettings(Entity, Base):
 
 
 def record(obj):
-    return {col.name: getattr(obj, col.name) for col in obj.__table__.columns if col.name != "password_hash"}
+    return {col.name: getattr(obj, col.name) for col in obj.__table__.columns
+            if col.name not in ("password_hash", "content")}

@@ -19,6 +19,9 @@ class LocalStore:
                     attempts INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL,
                     dependency TEXT, next_attempt REAL NOT NULL DEFAULT 0
                 );
+                CREATE TABLE IF NOT EXISTS queue_photos (
+                    command_id TEXT PRIMARY KEY, content BLOB NOT NULL
+                );
             """)
         if not self.get("device"):
             self.put("device", str(uuid.uuid4()))
@@ -55,6 +58,11 @@ class LocalStore:
         }
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            if action == "cut.evidence" and "photo" in payload:
+                # Listing pending commands must not decrypt every full-resolution image.
+                # Keep the original bytes encrypted and materialize only the command being sent.
+                db.execute("INSERT INTO queue_photos VALUES (?,?)", (command["id"], self.encode(payload["photo"])))
+                command["payload"] = {key: value for key, value in payload.items() if key != "photo"}
             if action in ("block.delete", "locker.delete"):
                 for existing in db.execute(
                     "SELECT id,command FROM queue WHERE actor_id=? AND status IN ('pendiente','requiere_sesion','error_temporal')",
@@ -68,6 +76,16 @@ class LocalStore:
                 (command["id"], actor_id, self.encode(command), "pendiente", command["client_at"], dependency),
             )
         return command["id"]
+
+    def command_for_send(self, task):
+        command = dict(task["command"], payload=dict(task["command"]["payload"]))
+        if command["action"] == "cut.evidence" and "photo" not in command["payload"]:
+            with self.connect() as db:
+                row = db.execute("SELECT content FROM queue_photos WHERE command_id=?", (command["id"],)).fetchone()
+            if row is None:
+                raise ValueError("No se encuentra la fotografía guardada para esta solicitud.")
+            command["payload"]["photo"] = self.decode(row[0])
+        return command
 
     def require_session(self, actor_id):
         with self.connect() as db:

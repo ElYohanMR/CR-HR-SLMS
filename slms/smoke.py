@@ -187,6 +187,8 @@ def run(app):
     capture_map(window)
     from .smoke_preferences import capture_preferences
     capture_preferences(window)
+    from .smoke_cuts import capture_cuts
+    capture_cuts(window, engine, session)
     window.synced(
         {"state": "sesion", "message": "Sesión vencida. Inicia sesión para enviar las solicitudes guardadas."}
     )

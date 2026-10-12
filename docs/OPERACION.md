@@ -1,5 +1,53 @@
 # Guía de operación
 
+## Solicitudes de corte de candado · 1.12
+
+Abre **Cortes de candado** en la barra izquierda. Recepción o HR registra
+la comunicación que recibió del supervisor; el programa no lee Teams ni correo.
+
+1. **Nueva solicitud:** selecciona empleado y casillero. Al elegir el empleado
+   se propone su casillero asignado, pero puedes cambiarlo si el incidente corresponde
+   a otro. Escribe nombre del supervisor, medio de comunicación y motivo libre.
+   Guarda y espera la confirmación del servidor. Estado: **Solicitada**.
+2. Abre la solicitud y usa **Asignar encargado**. Escribe quién realizará el
+   corte. Al confirmarse, pasa a **En proceso**. Cambiar de encargado exige motivo.
+3. Convoca al empleado conforme al procedimiento interno y adjunta las tres fotos:
+   empleado con su tarjeta Samtec ID en la mano frente al casillero; candado antes;
+   candado después. Adjunta una imagen por paso y espera su sincronización.
+   Se admiten JPG/PNG de hasta 6 MB y 24 megapíxeles; se conserva el archivo original.
+4. **Finalizar:** registra fecha/hora real del corte, detalle del resultado y
+   confirma presencia del empleado y verificación de su ID. Se exigen las tres
+   evidencias confirmadas y un encargado. Estado: **Finalizada**.
+
+**Cancelar solicitud** exige motivo y conserva el expediente. Los datos iniciales
+se editan mientras está Solicitada. Empleado/casillero identifican el expediente:
+si se eligieron incorrectamente, cancela y crea uno nuevo. En proceso puedes
+sustituir una fotografía indicando el motivo; las anteriores siguen consultables.
+Las solicitudes Finalizadas o Canceladas no se reabren ni se borran.
+
+El historial distingue al empleado, supervisor y encargado del corte de la cuenta
+de Recepción/HR que registró cada cambio. Se conservan datos de identificación del
+momento de creación, fechas, responsables y valores anteriores/posteriores.
+**Ver historial de la solicitud** consulta el expediente completo con conexión.
+Las fotografías requieren una sesión de Operación o Administración y conexión.
+La cuenta de Consulta puede ver el seguimiento, pero no las fotos.
+
+La lista permite buscar, filtrar por estado, ordenar por columnas, marcar filas
+y abrir expedientes con doble clic o clic derecho. No permite dos solicitudes
+abiertas simultáneas para el mismo casillero. Un corte no modifica su asignación.
+Los casilleros con expedientes no se pueden eliminar definitivamente.
+
+Sin conexión se conserva el paso que guardaste, con su foto cifrada localmente
+cuando corresponde. Espera la confirmación antes del siguiente paso. Los errores
+y conflictos aparecen en **Solicitudes**, donde puedes revisar el resultado y
+abrir el expediente actualizado. Las fotos confirmadas forman parte del respaldo
+de la base de datos; las todavía pendientes solo están en el equipo que las guardó.
+
+La primera apertura del servidor 1.12 aplica la migración 0006, que añade tablas
+sin cambiar el inventario. Si sigue ejecutándose un servidor anterior, guarda tu
+trabajo, reinicia Windows y abre el acceso directo actualizado. Un servidor remoto
+también debe actualizarse antes de utilizar este apartado.
+
 ## Ventana de opciones · 1.11
 
 El botón **Opciones** abre una ventana con categorías a la izquierda. El menú

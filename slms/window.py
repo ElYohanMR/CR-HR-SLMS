@@ -39,6 +39,7 @@ from .contextmenus import ContextMenus
 from .workflows import Workflows
 from .inventory_selection import InventorySelection
 from .preferences import Preferences
+from .cut_ui import CutWorkflows
 
 
 STATES = {
@@ -49,6 +50,13 @@ STATES = {
     "ocupado": "Asignado",
 }
 ACTIONS = {
+    "cut.create": "Crear solicitud de corte",
+    "cut.update": "Editar solicitud de corte",
+    "cut.assign": "Asignar encargado del corte",
+    "cut.evidence": "Adjuntar evidencia de corte",
+    "cut.photo": "Fotografía de evidencia",
+    "cut.complete": "Finalizar corte de candado",
+    "cut.cancel": "Cancelar solicitud de corte",
     "inventory.restore_many": "Restaurar elementos marcados",
     "inventory.purge": "Eliminar definitivamente inventario",
     "block.purge": "Bloque eliminado definitivamente",
@@ -99,7 +107,7 @@ def csv_safe(value):
     return "'" + text if text.lstrip().startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
-class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWindow):
+class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMenus, QMainWindow):
     def __init__(self, config, session, store=None):
         super().__init__()
         self.config, self.session = config, session
@@ -168,7 +176,7 @@ class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWind
         self.nav.setObjectName("nav")
         self.nav.setFixedWidth(205)
         self.nav.addItems(
-            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Solicitudes", "Historial", "Administración"]
+            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Solicitudes", "Historial", "Administración", "Cortes de candado"]
         )
         self.stack = QStackedWidget()
         body.addWidget(self.nav)
@@ -181,6 +189,7 @@ class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWind
         self.make_queue()
         self.make_history()
         self.make_admin()
+        self.make_cuts()
         self.nav.setCurrentRow(0)
         self.refresh()
         self.apply_preferences()
@@ -322,6 +331,10 @@ class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWind
         add(employees, "Importar empleados CSV", self.import_employees, editor)
         add(employees, "Exportar empleados CSV", lambda: self.export("employees"))
         add(employees, "Plantilla de empleados CSV", self.template_csv)
+        cuts = self.options_menu.addMenu("Cortes de candado")
+        add(cuts, "Abrir solicitudes de corte", lambda: self.nav.setCurrentRow(7))
+        add(cuts, "Nueva solicitud de corte", self.new_cut,
+            editor and self.data.get("features", {}).get("padlock_cuts", False))
         manage = self.options_menu.addMenu("Administración e historial")
         add(manage, "Cuentas y permisos", lambda: self.nav.setCurrentRow(6), admin)
         add(manage, "Edificios", self.buildings_dialog, admin)
@@ -1375,6 +1388,7 @@ class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWind
             content = copy.deepcopy(item)
             content["command"]["payload"].pop("password", None)
             content["command"]["payload"].pop("background", None)
+            content["command"]["payload"].pop("photo", None)
             info(
                 self,
                 "Solicitud: "
@@ -1811,6 +1825,7 @@ class Window(Preferences, InventorySelection, Workflows, ContextMenus, QMainWind
         self.refresh_inventory()
         self.refresh_queue()
         self.refresh_history()
+        self.refresh_cuts()
         self.fill(
             self.admin_table,
             [
