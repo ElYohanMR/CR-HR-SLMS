@@ -1,6 +1,20 @@
 # Guía de operación
 
-## Solicitudes de corte de candado · 1.12
+## Interfaz e inventario · 1.13
+
+Cada pestaña incluye un icono **ⓘ** junto al título. Coloca el puntero sobre él
+para consultar la ayuda de ese apartado; también puedes pulsarlo. Los avisos
+de conexión, errores y cambios pendientes siguen visibles cuando corresponden.
+**Cortes de candado** aparece inmediatamente antes de **Administración**.
+
+En **Inventario**, abre la ficha de un casillero y selecciona **Tiene candado:
+Sí o No**. Guarda y espera la confirmación. El valor también aparece en la lista.
+Los casilleros existentes muestran **Sin registrar** hasta que se revise este dato;
+los nuevos comienzan con **No**. Es independiente de la asignación y condición.
+Finalizar un corte no cambia automáticamente este campo: registra el estado
+físico observado, considerando si se colocó un candado nuevo.
+
+## Solicitudes de corte de candado · 1.13
 
 Abre **Cortes de candado** en la barra izquierda. Recepción o HR registra
 la comunicación que recibió del supervisor; el programa no lee Teams ni correo.
@@ -11,13 +25,13 @@ la comunicación que recibió del supervisor; el programa no lee Teams ni correo
    Guarda y espera la confirmación del servidor. Estado: **Solicitada**.
 2. Abre la solicitud y usa **Asignar encargado**. Escribe quién realizará el
    corte. Al confirmarse, pasa a **En proceso**. Cambiar de encargado exige motivo.
-3. Convoca al empleado conforme al procedimiento interno y adjunta las tres fotos:
-   empleado con su tarjeta Samtec ID en la mano frente al casillero; candado antes;
-   candado después. Adjunta una imagen por paso y espera su sincronización.
+3. Las fotografías son **opcionales**: puedes adjuntar la identidad frente al
+   casillero, el candado antes del corte y después. Puedes finalizar con ninguna,
+   una, dos o tres fotografías. Si adjuntas imágenes, espera su sincronización.
    Se admiten JPG/PNG de hasta 6 MB y 24 megapíxeles; se conserva el archivo original.
 4. **Finalizar:** registra fecha/hora real del corte, detalle del resultado y
-   confirma presencia del empleado y verificación de su ID. Se exigen las tres
-   evidencias confirmadas y un encargado. Estado: **Finalizada**.
+   confirma presencia del empleado y verificación de su ID. Se requiere un encargado,
+   fecha válida y resultado; las fotografías no son un requisito. Estado: **Finalizada**.
 
 **Cancelar solicitud** exige motivo y conserva el expediente. Los datos iniciales
 se editan mientras está Solicitada. Empleado/casillero identifican el expediente:
@@ -43,10 +57,10 @@ y conflictos aparecen en **Solicitudes**, donde puedes revisar el resultado y
 abrir el expediente actualizado. Las fotos confirmadas forman parte del respaldo
 de la base de datos; las todavía pendientes solo están en el equipo que las guardó.
 
-La primera apertura del servidor 1.12 aplica la migración 0006, que añade tablas
-sin cambiar el inventario. Si sigue ejecutándose un servidor anterior, guarda tu
-trabajo, reinicia Windows y abre el acceso directo actualizado. Un servidor remoto
-también debe actualizarse antes de utilizar este apartado.
+La actualización debe instalarse tanto en el servidor como en los equipos
+de consulta. Si sigue ejecutándose una versión anterior, guarda tu trabajo,
+reinicia Windows y abre el acceso directo actualizado. Para un servidor remoto,
+solicita la actualización a TI.
 
 ## Ventana de opciones · 1.11
 

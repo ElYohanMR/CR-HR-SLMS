@@ -367,6 +367,11 @@ def mutate(db, actor, command):
         target.number = required(p, "number", 40)
         target.condition = condition
         target.notes = str(p.get("notes", ""))[:10000]
+        if "has_padlock" in p:
+            value = p["has_padlock"]
+            if type(value) is not bool and not (value is None and target.has_padlock is None):
+                raise RuleError("Tiene candado debe ser Sí o No.")
+            target.has_padlock = value
     elif action in ("assignment.assign", "assignment.transfer", "assignment.release"):
         employee = get(db, Employee, p.get("employee_id"))
         check_version(employee, versions, "employee")

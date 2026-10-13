@@ -140,7 +140,8 @@ def create_app(engine, installation="test", demo=False):
         with sessions() as db:
             if engine.dialect.name == "postgresql":
                 db.execute(text("SELECT pg_advisory_xact_lock(731962401)"))
-            result = {"at": now(), "demo": demo, "features": {"inspections": True, "inventory_batch": True, "padlock_cuts": True}}
+            result = {"at": now(), "demo": demo, "features": {"inspections": True, "inventory_batch": True, "padlock_cuts": True,
+                                                           "optional_cut_photos": True, "locker_padlock": True}}
             for name, model in (
                 ("buildings", Building),
                 ("plans", Plan),

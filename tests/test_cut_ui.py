@@ -48,7 +48,7 @@ def test_form_table_and_workflow_controls(qtbot, system, tmp_path, monkeypatch):
     store.put("snapshot", client.get("/snapshot").json())
     w = Window({"url": "http://test"}, session, store)
     qtbot.addWidget(w)
-    w.nav.setCurrentRow(7)
+    w.nav.setCurrentRow(6)
     w.show()
     assert w.cut_table.rowCount() == 1
     w.cut_table.sortItems(3, Qt.SortOrder.DescendingOrder)
@@ -62,7 +62,7 @@ def test_form_table_and_workflow_controls(qtbot, system, tmp_path, monkeypatch):
     assert not dialog.actions["complete"].isEnabled()
     assert not dialog.photo_buttons["antes"].isEnabled()
     assert w.cut_submit(item, "cut.assign", {"assignee": "Encargado de prueba"})
-    assert w.cut_notice.text().startswith("1 cambios")
+    assert w.cut_notice.text() == "Cambios pendientes de confirmación: 1."
     dialog.refresh()
     assert not dialog.actions["assign"].isEnabled()
     task = store.queue(session["actor"]["id"])[0]
@@ -101,10 +101,6 @@ def test_creation_selects_assigned_locker_and_completion_date(qtbot, system, tmp
     qtbot.addWidget(form)
     form.widgets["employee_id"].setCurrentIndex(1)
     assert form.widgets["locker_id"].currentData() == locker["id"]
-    from test_cuts import attach
-    for kind, color in (("identidad", "red"), ("antes", "green"), ("despues", "blue")):
-        assert attach(client, item, kind, color)["status"] == "confirmada"
-        item = latest(client, item["id"])
     w.data = client.get("/snapshot").json()
     w.refresh()
     def accept(form):

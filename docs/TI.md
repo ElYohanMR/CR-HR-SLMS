@@ -1,5 +1,17 @@
 # Despliegue y recuperación
 
+## Actualización 1.13.0
+
+La migración 0007 añade lockers.has_padlock (boolean nullable). Los registros
+anteriores quedan NULL (Sin registrar); nuevos casilleros usan False. No se
+modifican asignaciones. locker.update incluye el campo con control de versión,
+auditoría y cola existente; los clientes anteriores pueden omitirlo sin borrarlo.
+
+Las fotografías de cortes son opcionales. Permanecen las comprobaciones de
+encargado, estado, identidad, fecha y resultado. Las capacidades del snapshot
+optional_cut_photos y locker_padlock indican soporte. Actualiza y reinicia el
+servicio junto con los clientes; respalda la base antes de actualizar.
+
 ## Topología y requisitos
 
 Un servicio central FastAPI con PostgreSQL y de una a tres aplicaciones Windows conectadas por HTTPS. Los clientes no reciben credenciales de PostgreSQL. El servidor de esta entrega se ejecuta en Windows bajo la cuenta que configuró su secreto DPAPI.

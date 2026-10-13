@@ -189,6 +189,21 @@ def run(app):
     capture_preferences(window)
     from .smoke_cuts import capture_cuts
     capture_cuts(window, engine, session)
+    window.nav.setCurrentRow(7)
+    QApplication.processEvents()
+    window.grab().save(str(home() / "administracion.png"))
+    window.nav.setCurrentRow(3)
+    def capture_locker(form):
+        form.show()
+        QApplication.processEvents()
+        form.grab().save(str(home() / "casillero-candado.png"))
+        form.close()
+        return QDialog.DialogCode.Rejected
+    Form.exec = capture_locker
+    try:
+        window.locker_dialog(window.data["lockers"][0]["id"])
+    finally:
+        Form.exec = original_exec
     window.synced(
         {"state": "sesion", "message": "Sesión vencida. Inicia sesión para enviar las solicitudes guardadas."}
     )

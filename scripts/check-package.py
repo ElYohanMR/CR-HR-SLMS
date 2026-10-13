@@ -98,7 +98,16 @@ try:
         evidence = next(e for e in client.get("/snapshot").json()["cut_evidence"] if e["request_id"] == cut_id)
         assert client.get("/cuts/evidence/" + evidence["id"]).content == data
         assert client.get("/cuts/" + cut_id + "/history").status_code == 200
-        cut_step("cut.cancel", {"reason": "Finalizó la prueba aislada del servidor."})
+        cut_step("cut.complete", {"identity_verified": True,
+            "performed_at": datetime.now(timezone.utc).isoformat(), "result": "Corte con una fotografía opcional."})
+        assert snapshot["features"]["locker_padlock"]
+        update = request("locker.update", {"id": locker["id"], "number": locker["number"],
+            "condition": locker["condition"], "notes": locker["notes"], "has_padlock": True},
+            {"locker:" + locker["id"]: locker["version"]})
+        result = client.post("/commands", json=update).json()
+        assert result["status"] == "confirmada", result
+        locker = next(e for e in client.get("/snapshot").json()["lockers"] if e["id"] == locker["id"])
+        assert locker["has_padlock"] is True
         departure = request(
             "employee.deactivate",
             {

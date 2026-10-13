@@ -14,6 +14,9 @@ QMainWindow, QDialog { background:#f5f5f5; }
 QLabel { color:#333333; background:transparent; }
 QLabel#title { font-size:25px; font-weight:600; color:#333333; }
 QLabel#subtitle { color:#606060; padding-bottom:8px; }
+QToolButton#pageHelp { color:#555555; background:transparent; border:none; font-size:20px; padding:3px; }
+QToolButton#pageHelp:hover, QToolButton#pageHelp:focus { color:#cc4b00; background:#fff0e6; border-radius:12px; }
+QLabel#administrationFooter { color:#666666; padding-top:8px; }
 QFrame#brandHeader { background:#444444; border-bottom:3px solid #fa661b; }
 QFrame#brandHeader QLabel { color:white; }
 QLabel#brandTitle { font-size:22px; font-weight:600; }

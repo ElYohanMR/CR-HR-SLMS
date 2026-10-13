@@ -99,8 +99,6 @@ def test_missing_fields_duplicate_open_and_stale_version(system):
     assert post(client, "cut.assign", {"id": item["id"], "assignee": "Encargado"}, item)["status"] == "confirmada"
     assert post(client, "cut.cancel", {"id": item["id"], "reason": "Solicitud antigua"}, item)["status"] == "conflicto"
     current = latest(client, item["id"])
-    assert post(client, "cut.complete", {"id": item["id"], "performed_at": now(),
-                                       "identity_verified": True, "result": "Sin fotos"}, current)["status"] == "rechazada"
     assert post(client, "cut.update", {"id": item["id"], "supervisor": "Otro", "reason": "Nuevo",
                                      "channel": "correo"}, current)["status"] == "rechazada"
     assert latest(client, item["id"])["version"] == current["version"]
@@ -220,6 +218,22 @@ def test_upgrade_from_previous_release_preserves_existing_data(system):
     migrate(engine)
     migrate(engine)
     after = client.get("/snapshot").json()
+    for locker in before["lockers"]:
+        locker["has_padlock"] = None
     for name in ("employees", "lockers", "blocks", "assignments", "admins", "plans"):
         assert after[name] == before[name]
+    assert all(e["has_padlock"] is None for e in after["lockers"])
     assert after["cut_requests"] == [] and after["cut_evidence"] == []
+
+@pytest.mark.parametrize("photo_count", [0, 1, 2])
+def test_completion_with_optional_photographs(system, photo_count):
+    _, client, _ = system
+    item = assigned(client)
+    for kind, color in list((("identidad", "red"), ("antes", "green")))[:photo_count]:
+        assert attach(client, item, kind, color)["status"] == "confirmada"
+        item = latest(client, item["id"])
+    result = post(client, "cut.complete", {"id": item["id"], "performed_at": now(),
+        "identity_verified": True, "result": "Corte realizado"}, item)
+    assert result["status"] == "confirmada", result
+    assert latest(client, item["id"])["status"] == "finalizada"
+    assert len(client.get("/snapshot").json()["cut_evidence"]) == photo_count

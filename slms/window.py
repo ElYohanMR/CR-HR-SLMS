@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import httpx
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QIcon
+from .config import asset
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -27,6 +29,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QMenu,
     QScrollArea,
+    QToolButton,
+    QToolTip,
 )
 from .forms import Form, info, confirm
 from .local import LocalStore
@@ -40,6 +44,7 @@ from .workflows import Workflows
 from .inventory_selection import InventorySelection
 from .preferences import Preferences
 from .cut_ui import CutWorkflows
+from .page_help import PAGE_HELP
 
 
 STATES = {
@@ -176,7 +181,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.nav.setObjectName("nav")
         self.nav.setFixedWidth(205)
         self.nav.addItems(
-            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Solicitudes", "Historial", "Administración", "Cortes de candado"]
+            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Solicitudes", "Historial", "Cortes de candado", "Administración"]
         )
         self.stack = QStackedWidget()
         body.addWidget(self.nav)
@@ -188,8 +193,8 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.make_inventory()
         self.make_queue()
         self.make_history()
-        self.make_admin()
         self.make_cuts()
+        self.make_admin()
         self.nav.setCurrentRow(0)
         self.refresh()
         self.apply_preferences()
@@ -204,11 +209,20 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         layout.setContentsMargins(18, 0, 0, 0)
         label = QLabel(title)
         label.setObjectName("title")
-        layout.addWidget(label)
-        label = QLabel(subtitle)
-        label.setObjectName("subtitle")
-        label.setWordWrap(True)
-        layout.addWidget(label)
+        heading = QHBoxLayout()
+        heading.addWidget(label)
+        help_button = QToolButton()
+        help_button.setObjectName("pageHelp")
+        help_button.setIcon(QIcon(str(asset("info.svg"))))
+        help_button.setIconSize(QSize(22, 22))
+        help_button.setAccessibleName("Información: " + title)
+        help_button.setToolTip(PAGE_HELP.get(title, subtitle))
+        help_button.setToolTipDuration(25000)
+        help_button.clicked.connect(lambda: QToolTip.showText(
+            help_button.mapToGlobal(help_button.rect().bottomLeft()), help_button.toolTip(), help_button))
+        heading.addWidget(help_button)
+        heading.addStretch()
+        layout.addLayout(heading)
         self.stack.addWidget(widget)
         return layout
 
@@ -332,11 +346,11 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         add(employees, "Exportar empleados CSV", lambda: self.export("employees"))
         add(employees, "Plantilla de empleados CSV", self.template_csv)
         cuts = self.options_menu.addMenu("Cortes de candado")
-        add(cuts, "Abrir solicitudes de corte", lambda: self.nav.setCurrentRow(7))
+        add(cuts, "Abrir solicitudes de corte", lambda: self.nav.setCurrentRow(6))
         add(cuts, "Nueva solicitud de corte", self.new_cut,
             editor and self.data.get("features", {}).get("padlock_cuts", False))
         manage = self.options_menu.addMenu("Administración e historial")
-        add(manage, "Cuentas y permisos", lambda: self.nav.setCurrentRow(6), admin)
+        add(manage, "Cuentas y permisos", lambda: self.nav.setCurrentRow(7), admin)
         add(manage, "Edificios", self.buildings_dialog, admin)
         add(manage, "Avisos a Recursos Humanos", self.mail_settings_form, admin)
         add(manage, "Crear respaldo", self.backup, admin)
@@ -495,7 +509,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             ("Agregar contorno", self.add_polygon, "admin"),
             ("Quitar contorno", self.remove_polygon, "admin"),
         ], "Opciones del mapa")
-        row.addWidget(QLabel("Clic derecho: acciones del bloque o crear uno en ese lugar."), 1)
+        row.addStretch()
         layout.addLayout(row)
         self.map = MapView()
 
@@ -519,7 +533,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.map.rowCancelled.connect(self.cancel_block_row)
         layout.addWidget(self.map, 1)
         legend = QLabel(
-            "Verde: hay disponibles · Rojo: completamente asignado · Ámbar: sin disponibles, requiere revisión. Acerca para leer etiquetas pequeñas."
+            "Verde: disponibles · Rojo: completamente asignado · Ámbar: requiere revisión"
         )
         legend.setWordWrap(True)
         layout.addWidget(legend)
@@ -859,7 +873,6 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.employee_status.addItem("Todos los empleados", "all")
         row.addWidget(self.employee_status)
         self.employee_status.currentIndexChanged.connect(self.refresh_employees)
-        row.addWidget(QLabel("Clic derecho en un empleado para editar, asignar o dar de baja."))
         row.addStretch()
         layout.addLayout(row)
         self.employees = self.table(
@@ -1021,8 +1034,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             ("Elementos eliminados / restaurar", self.archived_inventory, None),
         ])
         layout.addLayout(row)
-        layout.addWidget(QLabel("Clic derecho en un casillero para ver sus acciones y las de su bloque. Columna 1 = derecha."))
-        self.inventory = self.table(layout, ["Número", "Ubicación", "Estado", "Empleado", "Fila / columna"])
+        self.inventory = self.table(layout, ["Número", "Ubicación", "Estado", "Empleado", "Fila / columna", "Tiene candado"])
         self.inventory.horizontalHeaderItem(4).setToolTip(
             "Fila 1 = arriba; columna 1 = derecha. Haz clic para ordenar."
         )
@@ -1247,6 +1259,8 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                         ("Retirado", "retirado"),
                     ],
                 ),
+                ("has_padlock", "Tiene candado",
+                 ([("Sin registrar", None)] if locker.get("has_padlock") is None else []) + [("Sí", True), ("No", False)]),
                 ("notes", "Notas del casillero", "text"),
             ],
             locker,
@@ -1257,6 +1271,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                 else "Sin asignación vigente. Estado: " + STATES[locker["condition"]]
             ),
         )
+        form.widgets["has_padlock"].setEnabled(self.data.get("features", {}).get("locker_padlock", False))
         if person:
             self.button(form.layout(), "Liberar casillero", lambda: (form.reject(), self.release(assignment)))
         elif locker["condition"] == "utilizable":
@@ -1272,7 +1287,10 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             )
             self.button(form.layout(), "Ver historial del casillero", lambda: info(form, text))
         if form.exec() == QDialog.DialogCode.Accepted:
-            self.submit("locker.update", dict(form.values(), id=id), self.versions(("locker", locker)))
+            payload = dict(form.values(), id=id)
+            if not self.data.get("features", {}).get("locker_padlock"):
+                payload.pop("has_padlock", None)
+            self.submit("locker.update", payload, self.versions(("locker", locker)))
 
     def choose_person(self, locker):
         people = [e for e in self.data["employees"] if e["active"]]
@@ -1361,16 +1379,10 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         )
         row = QHBoxLayout()
         self.button(row, "Sincronizar ahora", self.sync)
-        row.addWidget(QLabel("Clic derecho en una solicitud para consultar o reintentar."))
         row.addStretch()
         layout.addLayout(row)
         self.queue_table = self.table(layout, ["Creada", "Operación", "Estado", "Intentos", "Resultado"])
         self.queue_table.cellDoubleClicked.connect(lambda r, c: self.queue_detail())
-        layout.addWidget(
-            QLabel(
-                "Los conflictos se resuelven revisando los datos actuales y creando una nueva solicitud. Se muestra la cola de tu cuenta."
-            )
-        )
 
     def retry(self):
         id = self.selected(self.queue_table)
@@ -1493,15 +1505,12 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             ("Crear copia de seguridad", self.backup, "admin"),
             ("Configurar avisos a HR", self.mail_settings_form, "admin"),
         ])
-        row.addWidget(QLabel("Clic derecho en una cuenta para editar sus datos y permisos."))
         row.addStretch()
         layout.addLayout(row)
         self.admin_table = self.table(layout, ["Usuario", "Nombre", "Permiso", "Estado"])
-        label = QLabel(
-            "Servidor: "
-            + self.config["url"]
-            + "\nLas contraseñas se guardan cifradas localmente. Las cuentas de consulta no pueden modificar información.\nLa restauración se realiza con el procedimiento documentado, con el servicio detenido."
-        )
+        from . import __version__
+        label = QLabel(f"Samtec Lockers · Versión {__version__} · Gestión de acceso y mantenimiento")
+        label.setObjectName("administrationFooter")
         label.setWordWrap(True)
         layout.addWidget(label)
 
@@ -1737,6 +1746,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                 STATES[status],
                 full_name(employee) if employee else "—",
                 f"{locker['row'] + 1} / {locker['column'] + 1}",
+                {True: "Sí", False: "No", None: "Sin registrar"}[locker.get("has_padlock")],
             ]
             if query in " ".join(values).casefold():
                 rows.append((locker["id"], values))
@@ -1819,7 +1829,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             widget.setText(label)
         pending = sum(q["status"] != "confirmada" for q in self.store.queue(self.session["actor"]["id"]))
         self.summary.setText(
-            f"{len(self.data['employees'])} empleados · {len(self.data['blocks'])} bloques · {counts['mantenimiento']} en mantenimiento · {pending} solicitudes sin confirmar en tu cuenta.\nPrimero registra el inventario físico. Los contornos iniciales y los nombres de edificios deben verificarse en sitio."
+            f"{len(self.data['employees'])} empleados · {len(self.data['blocks'])} bloques · {counts['mantenimiento']} casilleros en mantenimiento · Cambios pendientes: {pending}"
         )
         self.refresh_employees()
         self.refresh_inventory()

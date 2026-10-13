@@ -1,5 +1,29 @@
 # Validación de la entrega
 
+## Versión 1.13.0 · 13 de octubre de 2026
+
+- Fotografías opcionales: cierre comprobado con cero, una, dos y tres fotografías.
+  Se mantienen encargado, identidad verificada, fecha válida y resultado.
+- Cortes de candado antes de Administración. Ayuda por apartado al pasar el
+  puntero sobre un icono vectorial de información, también accesible por teclado.
+  Eliminados los párrafos permanentes de instrucciones; conservados los avisos
+  de errores, cambios pendientes, conexión y modo de demostración.
+- Tiene candado: Sí/No editable en la ficha y visible en Inventario; nuevo valor
+  incorporado al CSV. Migración 0007 conserva registros anteriores como
+  Sin registrar. Los casilleros nuevos comienzan con No.
+- Edición auditada, control de versiones, rechazo de valores inválidos,
+  compatibilidad con solicitudes anteriores y permisos de consulta verificados.
+  La asignación no cambia al editar Tiene candado ni al finalizar un corte.
+- Suite general: 153 pruebas aprobadas. PostgreSQL aislado: 21 pruebas aprobadas,
+  incluyendo migración y respaldo. Revalidación de interfaz tras el ajuste visual:
+  5 pruebas aprobadas. Revisión estática sin errores.
+- Ejecutable Windows comprobado en un perfil aislado: interfaz, autenticación,
+  cierre con una sola fotografía, conservación de JPG original, Tiene candado,
+  historial y baja del empleado. Capturas revisadas de Cortes, Inventario, ficha
+  y Administración; icono vectorial visible y textos legibles.
+- Advertencia no bloqueante de la dependencia de pruebas FastAPI/Starlette
+  sobre el transporte httpx; no afecta la ejecución de la aplicación.
+
 ## Versión 1.12.0 · 12 de octubre de 2026
 
 - Solicitudes de corte: Solicitada, En proceso, Finalizada y Cancelada; identificación

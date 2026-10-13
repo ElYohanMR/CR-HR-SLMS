@@ -81,6 +81,7 @@ class Locker(Entity, Base):
     column: Mapped[int] = mapped_column(Integer)
     condition: Mapped[str] = mapped_column(String(20), default="pendiente")
     notes: Mapped[str] = mapped_column(Text, default="")
+    has_padlock: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
     deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     __table_args__ = (Index("uq_locker_cell", "block_id", "row", "column", unique=True),)
 

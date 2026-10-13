@@ -65,11 +65,9 @@ class CutWorkflows:
         self.cut_create_button.setEnabled(ready and self.allowed("editor"))
         pending = sum(q["command"]["action"].startswith("cut.") and q["status"] != "confirmada"
                       for q in self.store.queue(self.session["actor"]["id"]))
-        self.cut_notice.setText(
-            f"{pending} cambios de corte sin confirmar. Revisa su estado en Solicitudes. "
-            "Las fotografías se adjuntan al expediente; cortar no libera ni reasigna el casillero."
-            if ready else "Este apartado necesita el servidor actualizado. Reinicia Windows y abre la aplicación actualizada."
-        )
+        self.cut_notice.setText(f"Cambios pendientes de confirmación: {pending}."
+                               if ready else "Actualiza la conexión para utilizar este apartado.")
+        self.cut_notice.setVisible(bool(pending) or not ready)
 
     def cut_pending(self, id):
         return any(q["command"]["action"].startswith("cut.") and q["command"]["payload"].get("id") == id
@@ -189,14 +187,13 @@ class CutWorkflows:
                                         photo=base64.b64encode(content).decode("ascii")))
 
     def complete_cut(self, item):
-        kinds = {e["kind"] for e in self.data.get("cut_evidence", []) if e["request_id"] == item["id"] and e["current"]}
-        if kinds != set(EVIDENCE):
-            info(self, "Adjunta y sincroniza las tres fotografías antes de finalizar.")
+        if not self.data.get("features", {}).get("optional_cut_photos", False):
+            info(self, "Actualiza el servidor para finalizar solicitudes con fotografías opcionales.")
             return
         form = Form("Finalizar corte de candado",
                     [("result", "Detalle del corte realizado", "text"),
                      ("identity_verified", "Empleado presente e identidad verificada con Samtec ID", "bool")],
-                    parent=self, description=f"Encargado: {item['assignee']}. Al finalizar se conserva el expediente y la asignación actual del casillero.",
+                    parent=self, description=f"Encargado: {item['assignee']}",
                     accept_label="Finalizar solicitud")
         date = QDateTimeEdit(QDateTime.currentDateTime(), form)
         date.setCalendarPopup(True)
@@ -277,7 +274,7 @@ class CutDialog(QDialog):
             button = window.button(row, title, lambda checked=False, fn=method: fn(self.item()))
             self.actions[key] = button
         layout.addLayout(row)
-        layout.addWidget(QLabel("Evidencias · JPG o PNG · máximo 6 MB y 24 megapíxeles por foto"))
+        layout.addWidget(QLabel("Fotografías opcionales · JPG o PNG · hasta 6 MB por archivo"))
         self.photo_buttons = {}
         for key, title in EVIDENCE.items():
             row = QHBoxLayout()
@@ -330,7 +327,8 @@ class CutDialog(QDialog):
             f"Resultado / cancelación: {item['result'] or 'Pendiente'}\nReferencia: {item['id']}"
         )
         self.pending.setText("Cambio pendiente de confirmación. Espera la sincronización; consulta Solicitudes si hay un error."
-                             if pending else "Datos confirmados en la última sincronización. Cada cambio registra quién lo realizó.")
+                             if pending else "")
+        self.pending.setVisible(pending)
         editable = w.allowed("editor") and not pending and item["status"] in ("solicitada", "en_proceso")
         self.actions["edit"].setEnabled(editable and item["status"] == "solicitada")
         self.actions["assign"].setEnabled(editable)

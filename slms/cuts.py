@@ -116,10 +116,6 @@ def apply_cut(db, actor, command):
     elif action == "cut.complete":
         if target.status != "en_proceso" or not target.assignee:
             raise RuleError("Asigna al encargado antes de finalizar.")
-        kinds = set(db.scalars(select(CutEvidence.kind).where(CutEvidence.request_id == target.id,
-                                                            CutEvidence.current.is_(True))))
-        if kinds != set(EVIDENCE):
-            raise RuleError("Faltan fotografías: identidad frente al casillero, antes del corte y después del corte.")
         if p.get("identity_verified") is not True:
             raise RuleError("Confirma la presencia del empleado y la verificación de su tarjeta Samtec ID.")
         try:
