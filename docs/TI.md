@@ -57,7 +57,8 @@ La migración 0002 agrega `mail_settings` y el campo JSON `notifications.cc`, si
 Monitorear /health, espacio libre, proceso y PostgreSQL. application.log rota a 2 MB con tres copias previas. Gestionar también logs del proceso y copias de seguridad desde TI.
 
 Definir con HR conservación de notas, historial y exportaciones. El ejecutable de desarrollo no tiene firma corporativa; TI puede firmarlo al distribuirlo. Revisar las licencias incluidas y la procedencia de la imagen antes de una redistribución externa. Se conserva la atribución de la imagen aportada.
-# Cortes de candado · actualización 1.12
+
+## Cortes de candado · actualización 1.12
 
 La migración 0006 agrega `cut_requests` y `cut_evidence`. Las fotografías
 originales se almacenan como binarios en la misma base de datos, con tipo,
@@ -81,4 +82,3 @@ humanas. La aplicación registra quién las procesó; no conecta con Microsoft n
 valida automáticamente el contenido o la identidad mostrada en una foto.
 Los expedientes cerrados y evidencias sustituidas se conservan. Cualquier política
 corporativa de retención o eliminación requerirá definir el procedimiento con TI.
-
