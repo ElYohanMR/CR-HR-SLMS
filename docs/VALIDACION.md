@@ -1,5 +1,13 @@
 # Validación de la entrega
 
+## Versión 1.13.1 · 13 de octubre de 2026
+
+- Cortes de candado debajo de Inventario. Atajos de navegación actualizados
+  para mantener Solicitudes e Historial en sus respectivas páginas.
+- 12 pruebas de interfaz y preferencias aprobadas; revisión estática sin errores.
+- Ejecutable verificado con perfil aislado y captura de navegación revisada.
+- No cambia el esquema ni las reglas de negocio de la versión 1.13.0.
+
 ## Versión 1.13.0 · 13 de octubre de 2026
 
 - Fotografías opcionales: cierre comprobado con cero, una, dos y tres fotografías.

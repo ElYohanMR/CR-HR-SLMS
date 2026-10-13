@@ -51,7 +51,7 @@ def capture_cuts(window, engine, session):
             assert image.save(buffer, "PNG")
             mutate("cut.evidence", {"kind": kind, "filename": "EJEMPLO-FICTICIO-" + kind + ".png",
                                     "photo": base64.b64encode(bytes(buffer.data())).decode()})
-        window.nav.setCurrentRow(6)
+        window.nav.setCurrentRow(4)
         QApplication.processEvents()
         window.grab().save(str(home() / "cortes-lista.png"))
         dialog = CutDialog(window, id)

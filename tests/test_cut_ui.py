@@ -48,7 +48,7 @@ def test_form_table_and_workflow_controls(qtbot, system, tmp_path, monkeypatch):
     store.put("snapshot", client.get("/snapshot").json())
     w = Window({"url": "http://test"}, session, store)
     qtbot.addWidget(w)
-    w.nav.setCurrentRow(6)
+    w.nav.setCurrentRow(4)
     w.show()
     assert w.cut_table.rowCount() == 1
     w.cut_table.sortItems(3, Qt.SortOrder.DescendingOrder)

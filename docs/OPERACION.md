@@ -5,7 +5,8 @@
 Cada pestaña incluye un icono **ⓘ** junto al título. Coloca el puntero sobre él
 para consultar la ayuda de ese apartado; también puedes pulsarlo. Los avisos
 de conexión, errores y cambios pendientes siguen visibles cuando corresponden.
-**Cortes de candado** aparece inmediatamente antes de **Administración**.
+**Cortes de candado** aparece debajo de **Inventario**. Después siguen
+**Solicitudes**, **Historial** y **Administración**.
 
 En **Inventario**, abre la ficha de un casillero y selecciona **Tiene candado:
 Sí o No**. Guarda y espera la confirmación. El valor también aparece en la lista.

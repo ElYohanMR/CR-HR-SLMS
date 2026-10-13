@@ -54,7 +54,9 @@ def test_help_navigation_and_padlock_form(qtbot, system, tmp_path, monkeypatch):
     w = Window({"url": "http://test"}, session, store)
     qtbot.addWidget(w)
     w.show()
-    assert w.nav.item(6).text() == "Cortes de candado"
+    assert w.nav.item(4).text() == "Cortes de candado"
+    assert w.nav.item(5).text() == "Solicitudes"
+    assert w.nav.item(6).text() == "Historial"
     assert w.nav.item(7).text() == "Administración"
     helpers = w.findChildren(QToolButton, "pageHelp")
     assert len(helpers) == 8 and all(e.toolTip() and not e.icon().isNull() for e in helpers)

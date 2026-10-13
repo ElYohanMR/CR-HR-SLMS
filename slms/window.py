@@ -181,7 +181,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.nav.setObjectName("nav")
         self.nav.setFixedWidth(205)
         self.nav.addItems(
-            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Solicitudes", "Historial", "Cortes de candado", "Administración"]
+            ["Resumen", "Mapa de casilleros", "Empleados", "Inventario", "Cortes de candado", "Solicitudes", "Historial", "Administración"]
         )
         self.stack = QStackedWidget()
         body.addWidget(self.nav)
@@ -191,9 +191,9 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.make_map()
         self.make_employees()
         self.make_inventory()
+        self.make_cuts()
         self.make_queue()
         self.make_history()
-        self.make_cuts()
         self.make_admin()
         self.nav.setCurrentRow(0)
         self.refresh()
@@ -303,7 +303,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         connection = self.options_menu.addMenu("Conexión y solicitudes")
         add(connection, "Iniciar sesión / cambiar cuenta", self.relogin)
         add(connection, "Sincronizar ahora", self.sync)
-        add(connection, "Ver solicitudes y sus resultados", lambda: self.nav.setCurrentRow(4))
+        add(connection, "Ver solicitudes y sus resultados", lambda: self.nav.setCurrentRow(5))
         add(connection, "Reintentar solicitudes pendientes", self.retry_pending)
         add(connection, "Estado de conexión", self.connection_info)
         maps = self.options_menu.addMenu("Mapa")
@@ -346,7 +346,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         add(employees, "Exportar empleados CSV", lambda: self.export("employees"))
         add(employees, "Plantilla de empleados CSV", self.template_csv)
         cuts = self.options_menu.addMenu("Cortes de candado")
-        add(cuts, "Abrir solicitudes de corte", lambda: self.nav.setCurrentRow(6))
+        add(cuts, "Abrir solicitudes de corte", lambda: self.nav.setCurrentRow(4))
         add(cuts, "Nueva solicitud de corte", self.new_cut,
             editor and self.data.get("features", {}).get("padlock_cuts", False))
         manage = self.options_menu.addMenu("Administración e historial")
@@ -354,7 +354,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         add(manage, "Edificios", self.buildings_dialog, admin)
         add(manage, "Avisos a Recursos Humanos", self.mail_settings_form, admin)
         add(manage, "Crear respaldo", self.backup, admin)
-        add(manage, "Historial de cambios", lambda: self.nav.setCurrentRow(5))
+        add(manage, "Historial de cambios", lambda: self.nav.setCurrentRow(6))
         add(manage, "Notificaciones de correo", self.notifications)
         self.options_menu.addSeparator()
         add(self.options_menu, "Ayuda y versión", self.quick_help)
@@ -1067,7 +1067,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             and q["status"] in ("pendiente", "requiere_sesion", "error_temporal")
             for q in self.store.queue(self.session["actor"]["id"])
         ):
-            self.nav.setCurrentRow(4)
+            self.nav.setCurrentRow(5)
             info(
                 self,
                 "Esta eliminación ya está guardada. Inicia sesión si se solicita y sincroniza; no necesitas volver a eliminarla.",
