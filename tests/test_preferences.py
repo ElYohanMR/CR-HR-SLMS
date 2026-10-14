@@ -9,6 +9,8 @@ from slms.local import LocalStore
 from slms.preferences import normalize_preferences, DEFAULTS
 from slms.settings_dialog import SettingsDialog
 from slms.window import Window
+from slms.numbering import DIRECTIONS, HORIZONTAL, VERTICAL
+from test_numbering import LAYOUTS
 
 
 @pytest.fixture
@@ -204,3 +206,89 @@ def test_options_button_opens_window_and_cancel_on_write_failure(window, monkeyp
     assert d.apply() is False and messages
     assert d.committed["block"]["rotation"] == 10
     assert d.apply_button.isEnabled()
+
+
+def test_numbering_options_dependency_persistence_cancel_restore(window, qtbot):
+    d = SettingsDialog(window.preferences, window.data["buildings"], window.save_preferences, window)
+    qtbot.addWidget(d)
+    first, second = d.widgets["block.numbering_first"], d.widgets["block.numbering_second"]
+    assert first.count() == 4 and second.count() == 2
+    for _, direction in DIRECTIONS:
+        first.setCurrentIndex(first.findData(direction))
+        compatible = VERTICAL if direction in HORIZONTAL else HORIZONTAL
+        assert {second.itemData(i) for i in range(second.count())} == compatible
+        for step in compatible:
+            second.setCurrentIndex(second.findData(step))
+            assert d.apply()
+            window.load_preferences()
+            assert window.preferences["block"]["numbering_first"] == direction
+            assert window.preferences["block"]["numbering_second"] == step
+            reopened = SettingsDialog(window.preferences, [], window.save_preferences, window)
+            qtbot.addWidget(reopened)
+            assert reopened.values() == d.values()
+            assert not reopened.apply_button.isEnabled()
+            reopened.reject()
+    committed = copy.deepcopy(window.preferences)
+    d.fill(DEFAULTS)
+    assert d.values() == DEFAULTS and d.apply_button.isEnabled()
+    d.reject()
+    window.load_preferences()
+    assert window.preferences == committed
+
+
+@pytest.mark.parametrize("first,second,expected", LAYOUTS)
+def test_new_block_uses_saved_numbering(window, monkeypatch, first, second, expected):
+    prefs = copy.deepcopy(DEFAULTS)
+    prefs["block"].update(rows=2, columns=3, numbering_first=first, numbering_second=second)
+    window.save_preferences(prefs)
+    sent = []
+    monkeypatch.setattr(window, "submit", lambda *args: sent.append(args))
+
+    def create(form):
+        assert form.values()["numbering_first"] == first
+        assert form.values()["numbering_second"] == second
+        assert form.widgets["numbering_second"].count() == 2
+        form.widgets["start"].setText("1")
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(Form, "exec", create)
+    window.block_form()
+    assert sent[0][1]["numbers"] == [str(n) for row in expected for n in reversed(row)]
+    assert "numbering_first" not in sent[0][1]  # Wire format remains compatible.
+
+
+def test_numbering_overrides_on_individual_block_and_row(window, monkeypatch):
+    sent = []
+    monkeypatch.setattr(window, "submit", lambda *args: sent.append(args))
+
+    def create(form):
+        first, second = form.widgets["numbering_first"], form.widgets["numbering_second"]
+        first.setCurrentIndex(first.findData("top_to_bottom"))
+        assert {second.itemData(i) for i in range(second.count())} == HORIZONTAL
+        second.setCurrentIndex(second.findData("left_to_right"))
+        form.widgets["rows"].setValue(2)
+        form.widgets["columns"].setValue(3)
+        if "numbers" in form.widgets:
+            form.widgets["numbers"].setPlainText("001, A, 5, B, 003, Z")
+        else:
+            form.widgets["first_number"].setText("6000")
+            form.widgets["count"].setValue(2)
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(Form, "exec", create)
+    monkeypatch.setattr(QDialog, "exec", lambda self: QDialog.DialogCode.Accepted)
+    window.block_form()
+    assert sent[0][1]["numbers"] == ["003", "5", "001", "Z", "B", "A"]
+    window.create_block_row([400, 400], [500, 500])
+    operations = sent[1][1]["operations"]
+    assert operations[0]["payload"]["numbers"] == ["6004", "6002", "6000", "6005", "6003", "6001"]
+    assert operations[1]["payload"]["numbers"] == ["6010", "6008", "6006", "6011", "6009", "6007"]
+    assert window.preferences == DEFAULTS
+
+
+def test_legacy_and_incompatible_numbering_preferences():
+    assert normalize_preferences({"block": {"rows": 4, "columns": 3}}) == DEFAULTS
+    assert normalize_preferences({"block": {"numbering_first": "bad", "numbering_second": []}}) == DEFAULTS
+    result = normalize_preferences({"block": {"numbering_first": "bottom_to_top", "numbering_second": "top_to_bottom"}})
+    assert result["block"]["numbering_first"] == "bottom_to_top"
+    assert result["block"]["numbering_second"] in HORIZONTAL

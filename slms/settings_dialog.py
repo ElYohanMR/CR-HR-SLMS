@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from .preferences import DEFAULTS, SCALES, normalize_preferences
+from .numbering import DIRECTIONS, bind_order_combos
 
 
 class SettingsDialog(QDialog):
@@ -80,6 +81,9 @@ class SettingsDialog(QDialog):
         self.combo(form, "block.location", "Ubicación", [("Exterior", "EXT"), ("Interior", "INT")])
         self.number(form, "block.rows", "Filas", 1, 12)
         self.number(form, "block.columns", "Columnas", 1, 12)
+        self.combo(form, "block.numbering_first", "Primer paso de numeración", DIRECTIONS)
+        self.combo(form, "block.numbering_second", "Segundo paso de numeración", DIRECTIONS)
+        bind_order_combos(self.widgets["block.numbering_first"], self.widgets["block.numbering_second"])
         self.number(form, "block.rotation", "Rotación de etiqueta", -360, 360, decimal=True)
         self.line(form, "block.prefix", "Prefijo del bloque", 40)
         self.number(form, "block.count", "Bloques por fila", 1, 200)

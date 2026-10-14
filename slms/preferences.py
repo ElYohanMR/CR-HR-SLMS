@@ -3,6 +3,8 @@
 import copy
 import math
 
+from .numbering import DEFAULT_FIRST, DEFAULT_SECOND, normalize_order
+
 DEFAULTS = {
     "ui_scale": 100,
     "satellite": True,
@@ -15,6 +17,8 @@ DEFAULTS = {
         "rotation": 10.0,
         "prefix": "N",
         "count": 4,
+        "numbering_first": DEFAULT_FIRST,
+        "numbering_second": DEFAULT_SECOND,
     },
     "employee": {"department": "", "shift": "", "active": True, "notes": ""},
 }
@@ -49,9 +53,14 @@ def normalize_preferences(raw):
                 continue
             if isinstance(value, str):
                 limit = {"building_id": 200, "department": 120, "shift": 80, "notes": 2000,
-                         "prefix": 40, "side": 1, "location": 3}[key]
+                         "prefix": 40, "side": 1, "location": 3,
+                         "numbering_first": 20, "numbering_second": 20}[key]
                 value = value[:limit].strip()
             result[section][key] = round(float(value), 2) if key == "rotation" else value
+    block = result["block"]
+    block["numbering_first"], block["numbering_second"] = normalize_order(
+        block["numbering_first"], block["numbering_second"]
+    )
     return result
 
 

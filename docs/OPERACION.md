@@ -1,5 +1,28 @@
 # Guía de operación
 
+## Orden de numeración · 1.14.1
+
+En **Opciones → Bloques y filas** configura **Primer paso de numeración** y
+**Segundo paso de numeración**. El primero recorre cada fila o columna; el
+segundo indica hacia dónde avanzar al terminarla. Las direcciones se interpretan
+mirando el bloque de frente, independientemente de la rotación de su etiqueta en el mapa.
+
+- Si el primer paso es de izquierda a derecha o de derecha a izquierda,
+  el segundo permite de arriba a abajo o de abajo a arriba.
+- Si el primer paso es de arriba a abajo o de abajo a arriba,
+  el segundo permite de izquierda a derecha o de derecha a izquierda.
+
+Son ocho distribuciones. Por ejemplo, con 2 filas, 3 columnas y números 1 a 6,
+**de arriba a abajo → de izquierda a derecha** coloca 1, 3, 5 en la fila superior
+y 2, 4, 6 en la inferior. **Aplicar** o **Aceptar** guarda la preferencia por cuenta
+en este equipo. El valor inicial sigue siendo derecha a izquierda → arriba a abajo.
+
+Los formularios **Nuevo bloque** y **Crear fila de bloques** toman estos valores
+y permiten cambiarlos para esa creación. Los números introducidos por comas
+siguen el mismo recorrido. Los bloques existentes que se reubiquen en una fila
+conservan sus números y posiciones internas; los predeterminados solo afectan
+a los nuevos. La importación de Excel conserva las coordenadas de fila y columna del archivo.
+
 ## Correos y Microsoft · 1.14
 
 En **Historial → Correos** selecciona un aviso confirmado. Usa **Vista previa
@@ -97,7 +120,7 @@ como solicitudes al servidor.
 - **Mapa:** imagen satelital o solo contornos y bloques. Conserva coordenadas,
   proporciones, zoom, movimientos pendientes y Deshacer/Rehacer.
 - **Bloques y filas:** edificio, lado, interior/exterior, filas, columnas,
-  rotación, prefijo y cantidad de bloques de una fila. Valores iniciales: 4×3
+  primer y segundo paso de numeración, rotación, prefijo y cantidad de bloques de una fila. Valores iniciales: 4×3
   casilleros y 10° de rotación. El plano y posición provienen del mapa actual.
 - **Empleados:** departamento, turno, estado activo y notas iniciales. El ID,
   nombre, apellidos y correo se completan individualmente.
@@ -131,7 +154,7 @@ Abre la aplicación actualizada para cargar su servicio local. Si sigue activo u
 
 En **Mapa → Opciones del mapa → Crear fila de bloques**, marca el primer y el último punto de la pared. También puedes hacer clic derecho en el inicio y elegir **Crear fila desde aquí**. Clic derecho cancela la selección. Guarda primero cualquier posición o contorno que hayas modificado.
 
-Indica edificio, lado, cantidad, prefijo, inicio del nombre y primer número de casillero. Por ejemplo, 40 bloques, prefijo E e inicio 01 producen E01 a E40, distribuidos uniformemente entre los extremos. Las dimensiones predeterminadas son 4 filas y 3 columnas, editables. La numeración conserva ceros iniciales y avanza de derecha a izquierda y de arriba hacia abajo.
+Indica edificio, lado, cantidad, prefijo, inicio del nombre y primer número de casillero. Por ejemplo, 40 bloques, prefijo E e inicio 01 producen E01 a E40, distribuidos uniformemente entre los extremos. Las dimensiones predeterminadas son 4 filas y 3 columnas, editables. La numeración conserva ceros iniciales y sigue los dos pasos seleccionados en el formulario.
 
 Revisa la vista previa y la tabla antes de pulsar **Crear fila**. Puedes volver a editar o cancelar sin crear nada. El servidor confirma toda la fila en una operación; un número duplicado o conflicto cancela todo el lote. Los casilleros nuevos quedan pendientes de verificación. Las etiquetas mantienen el mismo tamaño relativo al mapa.
 
@@ -229,7 +252,7 @@ En **Inventario** están **Eliminar casillero seleccionado**, **Eliminar bloque�
 
 La eliminación conserva historial, responsable y fecha, pero oculta el elemento del mapa y del inventario. Sus códigos permanecen reservados. **Elementos eliminados → Restaurar seleccionado** permite recuperarlo; restaura primero su bloque si también fue eliminado. Los casilleros restaurados quedan pendientes de verificación y no recuperan antiguas asignaciones. Restaurar un bloque no restaura casilleros eliminados individualmente antes de eliminar ese bloque.
 
-Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, por filas de derecha a izquierda y de arriba hacia abajo. También puedes generar una secuencia desde un primer número.
+Confirma los edificios antes de registrar bloques. Para interiores, crea un plano por edificio y nivel. En Nuevo bloque indica filas y columnas según la disposición física. Los números individuales se escriben separados por comas, siguiendo el primer y segundo paso de numeración elegidos. También puedes generar una secuencia desde un primer número.
 
 Los números físicos deben ser únicos en esta instalación. Si se repiten entre edificios, establece primero una convención que los distinga.
 

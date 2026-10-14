@@ -18,10 +18,17 @@ def capture_preferences(window):
     dialog.widgets["ui_scale"].setCurrentIndex(dialog.widgets["ui_scale"].findData(125))
     dialog.widgets["satellite"].setCurrentIndex(1)
     dialog.widgets["block.rotation"].setValue(12)
+    first, second = dialog.widgets["block.numbering_first"], dialog.widgets["block.numbering_second"]
+    first.setCurrentIndex(first.findData("bottom_to_top"))
+    assert second.count() == 2
+    assert {second.itemData(i) for i in range(2)} == {"left_to_right", "right_to_left"}
+    second.setCurrentIndex(second.findData("left_to_right"))
     dialog.widgets["employee.shift"].setText("T3")
     assert dialog.apply()
     window.load_preferences()
     assert window.preferences["block"]["rotation"] == 12
+    assert window.preferences["block"]["numbering_first"] == "bottom_to_top"
+    assert window.preferences["block"]["numbering_second"] == "left_to_right"
     assert window.preferences["employee"]["shift"] == "T3"
     assert not window.map.background_item.isVisible()
     assert window.data == original_data

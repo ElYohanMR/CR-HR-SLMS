@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboB
 from .forms import Form, info, confirm
 from .mapview import MapView
 from .block_rows import plan_row
+from .numbering import numbering_fields, bind_order_combos
 from .inspections import OUTCOMES, DISCREPANCIES
 
 
@@ -246,6 +247,7 @@ class Workflows:
             ("first_number", "Primer casillero", "line"),
             ("rows", "Filas por bloque", "int"),
             ("columns", "Columnas por bloque", "int"),
+            *numbering_fields(),
             ("rotation", "Rotación de etiquetas", "float"),
         ]
         form = Form(
@@ -253,9 +255,10 @@ class Workflows:
             fields,
             {**self.new_block_defaults(), "first_label": "01"},
             self,
-            description="Los bloques se distribuyen entre ambos puntos. Los existentes conservan su numeración y lado registrado; restaura primero los eliminados. El lado elegido se aplica a los nuevos. Numeración de derecha a izquierda y de arriba hacia abajo.",
+            description="Los bloques se distribuyen entre ambos puntos. Los existentes conservan su numeración y lado registrado; restaura primero los eliminados. El lado y el orden de numeración elegidos se aplican a los nuevos.",
             accept_label="Vista previa",
         )
+        bind_order_combos(form.widgets["numbering_first"], form.widgets["numbering_second"])
         form.widgets["count"].setRange(1, 200)
         form.widgets["count"].setValue(self.preferences["block"]["count"])
         form.widgets["rotation"].setRange(-360, 360)
@@ -296,8 +299,8 @@ class Workflows:
                             p["label"],
                             "Reubicar" if op["action"] == "block.update" else "Crear",
                             {"N": "Norte", "S": "Sur", "E": "Este", "O": "Oeste"}[p["side"]],
-                            p["numbers"][0],
-                            p["numbers"][-1],
+                            min(p["numbers"], key=int),
+                            max(p["numbers"], key=int),
                             p["x"],
                             p["y"],
                         ],

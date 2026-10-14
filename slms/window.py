@@ -43,6 +43,7 @@ from .contextmenus import ContextMenus
 from .workflows import Workflows
 from .inventory_selection import InventorySelection
 from .preferences import Preferences
+from .numbering import numbering_fields, bind_order_combos, arrange_numbers
 from .cut_ui import CutWorkflows
 from .page_help import PAGE_HELP
 
@@ -763,6 +764,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                 ("location", "Ubicación", [("Exterior", "EXT"), ("Interior", "INT")]),
                 ("rows", "Filas", "int"),
                 ("columns", "Columnas", "int"),
+                *numbering_fields(),
                 ("start", "Primer número (si son consecutivos)", "line"),
                 ("numbers", "O números separados por comas", "text"),
             ] + fields
@@ -774,8 +776,10 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                 "x": position[0] if position else 500, "y": position[1] if position else 500,
                 "label": self.preferences["block"]["prefix"] + "01", "plan_id": plan_id or self.plan_combo.currentData()},
             self,
-            description="Los casilleros nuevos quedan pendientes de verificación física. La numeración avanza de derecha a izquierda, fila por fila de arriba hacia abajo. La columna 1 está a la derecha.",
+            description="Los casilleros nuevos quedan pendientes de verificación física. Los números se distribuyen siguiendo el primer paso y luego el segundo, vistos de frente.",
         )
+        if not block:
+            bind_order_combos(form.widgets["numbering_first"], form.widgets["numbering_second"])
         form.widgets["rotation"].setRange(-360, 360)
         if form.exec() != QDialog.DialogCode.Accepted:
             return
@@ -794,6 +798,14 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                     info(self, "Indica el primer número o la lista de números físicos.")
                     return
             payload.pop("start", None)
+            try:
+                payload["numbers"] = arrange_numbers(
+                    payload["numbers"], payload["rows"], payload["columns"],
+                    payload.pop("numbering_first"), payload.pop("numbering_second"),
+                )
+            except ValueError as exc:
+                info(self, str(exc))
+                return
         self.submit("block.update" if block else "block.create", payload, self.versions(("block", block)))
 
     def open_block(self, id):
@@ -804,7 +816,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         dialog.setWindowTitle("Bloque " + block["label"])
         layout = QVBoxLayout(dialog)
         layout.addWidget(QLabel(f"{block['rows']} filas × {block['columns']} columnas"))
-        layout.addWidget(QLabel("Vista de frente · Numeración de derecha a izquierda, de arriba hacia abajo."))
+        layout.addWidget(QLabel("Vista de frente · Posición física de cada casillero."))
         grid = QGridLayout()
         layout.addLayout(grid)
         for locker in sorted(
@@ -824,7 +836,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             button.clicked.connect(
                 lambda checked=False, locker=locker: (dialog.accept(), self.locker_dialog(locker["id"]))
             )
-            # Stored column is the ordinal within the numbering sequence (0 = right).
+            # Physical column 0 is the right edge, independent of numbering direction.
             grid.addWidget(button, locker["row"], block["columns"] - 1 - locker["column"])
         self.button(layout, "Editar nombre / posición", lambda: (dialog.accept(), self.block_form(block)))
         self.button(layout, "Eliminar bloque", lambda: (dialog.accept(), self.delete_inventory("block", block)))

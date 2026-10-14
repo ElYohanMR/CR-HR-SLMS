@@ -1,5 +1,20 @@
 # Validación de la entrega
 
+## Versión 1.14.1 · 14 de octubre de 2026
+
+- Orden de numeración configurable mediante dos pasos perpendiculares: ocho
+  recorridos comprobados contra la distribución física guardada en el servidor.
+- Ajustes por cuenta, persistencia, Aplicar, Cancelar, restauración de valores
+  iniciales y compatibilidad con preferencias anteriores verificados.
+- Bloques individuales y filas toman los valores predeterminados y permiten
+  modificarlos. Las listas manuales mantienen sus etiquetas. Reubicar un bloque
+  existente conserva la posición interna, números e identidades de sus casilleros.
+- 50 pruebas aprobadas de preferencias, numeración, filas y menús contextuales.
+  Revisión estática sin errores y revisión visual del apartado Bloques y filas.
+- Ejecutable Windows verificado en un perfil aislado: interfaz, persistencia
+  de los nuevos pasos, autenticación, servicio, cortes y notificaciones.
+- Sin migración de base de datos ni cambios en el formato de solicitudes.
+
 ## Versión 1.14.0 · 14 de octubre de 2026
 
 - Vista previa editable con destinatario, CC, asunto y mensaje. Borradores

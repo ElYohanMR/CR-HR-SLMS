@@ -1,6 +1,8 @@
-# Samtec Lockers · 1.2
+# Samtec Lockers · 1.14.1
 
 Aplicación Windows con servicio central para recepción y Recursos Humanos.
+
+La versión 1.14.1 agrega ocho órdenes de numeración en **Opciones → Bloques y filas**, mediante un primer y segundo paso compatibles. Los nuevos bloques y filas usan esos valores y permiten modificarlos antes de crear. Consulta **docs/OPERACION.md** para la guía actualizada.
 
 La versión 1.2 agrega baja y liberación en una operación, devolución voluntaria, filtro de empleados activos/inactivos y avisos simulados con destinatario de HR configurable. Los casilleros devueltos requieren revisión física antes de volver a asignarse, salvo confirmación explícita de que están vacíos y utilizables.
 

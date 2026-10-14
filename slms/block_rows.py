@@ -2,6 +2,8 @@
 
 import math
 
+from .numbering import arrange_numbers, DEFAULT_FIRST, DEFAULT_SECOND
+
 
 def plan_row(snapshot, plan_id, start, end, values):
     count, rows, columns = values["count"], values["rows"], values["columns"]
@@ -64,14 +66,19 @@ def plan_row(snapshot, plan_id, start, end, values):
                 (x for x in snapshot.get("lockers", []) if x["block_id"] == existing["id"]),
                 key=lambda x: (x["row"], x["column"]),
             )
-            if [(x["row"], x["column"], x["number"]) for x in lockers] != [
-                (n // columns, n % columns, number) for n, number in enumerate(numbers)
-            ]:
+            if len(lockers) != rows * columns or {x["number"] for x in lockers} != set(numbers):
                 raise ValueError(
                     f"La numeración de {label} no coincide con la fila propuesta. "
                     "Revisa su primer número y dimensiones; se conservan sus números y asignaciones. "
                     "Si eliminaste casilleros por separado, restáuralos primero."
                 )
+            # Repositioning a block never renumbers it, even when defaults have changed.
+            numbers = [x["number"] for x in lockers]
+        else:
+            numbers = arrange_numbers(
+                numbers, rows, columns,
+                values.get("numbering_first", DEFAULT_FIRST), values.get("numbering_second", DEFAULT_SECOND),
+            )
         if any(
             (number in used and (not existing or used[number]["block_id"] != existing["id"])) or len(number) > 40
             for number in numbers
