@@ -109,8 +109,8 @@ solicita la actualización a TI.
 
 ## Ventana de opciones · 1.11
 
-El botón **Opciones** abre una ventana con categorías a la izquierda. El menú
-anterior se conserva en **Acciones**. Las preferencias pertenecen a la cuenta
+En **Acciones → Opciones de la aplicación…** se abre una ventana con categorías
+a la izquierda. Las preferencias pertenecen a la cuenta
 que inició sesión y a este equipo; no modifican datos existentes ni se envían
 como solicitudes al servidor.
 

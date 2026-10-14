@@ -190,10 +190,11 @@ def test_map_view_toggle_preserves_aspect_zoom_pending_moves_and_undo(window):
     assert not view.background_item.isVisible() and view.map_height == height
 
 
-def test_options_button_opens_window_and_cancel_on_write_failure(window, monkeypatch):
+def test_actions_menu_opens_settings_and_cancel_on_write_failure(window, monkeypatch):
     opened = []
     monkeypatch.setattr(SettingsDialog, "exec", lambda d: opened.append(d.windowTitle()))
-    window.options_button.click()
+    window.populate_options()
+    next(a for a in window.options_menu.actions() if a.text() == "Opciones de la aplicación…").trigger()
     assert opened == ["Opciones de Samtec Lockers"]
     messages = []
     monkeypatch.setattr("slms.settings_dialog.QMessageBox.warning", lambda *args: messages.append(args))

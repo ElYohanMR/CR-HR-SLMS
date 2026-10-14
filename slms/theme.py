@@ -4,7 +4,7 @@ import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPalette, QPixmap
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel
 from .config import asset
 
 
@@ -111,7 +111,7 @@ def apply_theme(app):
     app.setStyleSheet(STYLE)
 
 
-def brand_header(parent=None):
+def brand_header(parent=None, subtitle=None):
     header = QFrame(parent)
     header.setObjectName("brandHeader")
     row = QHBoxLayout(header)
@@ -130,6 +130,14 @@ def brand_header(parent=None):
     row.addWidget(divider)
     title = QLabel("Locker Management System")
     title.setObjectName("brandTitle")
-    row.addWidget(title)
+    if subtitle is None:
+        row.addWidget(title)
+    else:
+        text = QVBoxLayout()
+        text.setSpacing(4)
+        text.addWidget(title)
+        subtitle.setObjectName("brandCaption")
+        text.addWidget(subtitle)
+        row.addLayout(text)
     row.addStretch()
     return header, row
