@@ -128,7 +128,7 @@ def brand_header(parent=None):
     divider = QLabel("|")
     divider.setObjectName("brandDivider")
     row.addWidget(divider)
-    title = QLabel("LOCKERS")
+    title = QLabel("Locker Management System")
     title.setObjectName("brandTitle")
     row.addWidget(title)
     row.addStretch()

@@ -136,7 +136,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         }
         self.worker = None
         self.connection_state = "inicial"
-        self.setWindowTitle("Samtec Lockers · Gestión de casilleros")
+        self.setWindowTitle("SLMS - Samtec Locker Management System - Gestion de casilleros")
         self.resize(1450, 900)
         self.setMinimumSize(1080, 720)
         self.setStyleSheet(STYLE)
