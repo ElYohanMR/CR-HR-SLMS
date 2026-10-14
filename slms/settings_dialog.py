@@ -98,6 +98,22 @@ class SettingsDialog(QDialog):
         notes.setMaximumHeight(110)
         self.add(form, "employee.notes", "Notas iniciales", notes)
 
+        form = self.page(
+            "Microsoft y correo", "Microsoft y correo",
+            "Abre los borradores en tu aplicación de correo. El acceso con Microsoft y el envío automático requieren habilitación por TI.",
+        )
+        method = QComboBox()
+        method.addItem("Manual · abrir borrador en correo")
+        method.addItem("Microsoft · pendiente de habilitación")
+        method.setEnabled(False)
+        form.addRow("Entrega de correo", method)
+        automatic = QCheckBox("Enviar automáticamente al confirmar una asignación")
+        automatic.setEnabled(False)
+        automatic.setToolTip("Disponible cuando TI integre y autorice el envío con Microsoft.")
+        form.addRow("Envío automático", automatic)
+        form.addRow("Inicio con Microsoft", QLabel("Pendiente de habilitación por TI"))
+        form.addRow("Estado actual", QLabel("La aplicación no envía correos automáticamente."))
+
         footer = QHBoxLayout()
         layout.addLayout(footer)
         restore = QPushButton("Restaurar valores iniciales")

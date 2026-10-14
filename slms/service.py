@@ -174,7 +174,7 @@ def mutate(db, actor, command):
         target.extra = dict(
             target.extra or {}, departure={"type": departure_type, "reason": reason, "at": at, "by": actor.id}
         )
-        notification(db, command["id"], target, action, locker)
+        notification(db, command["id"], target, action, locker, actor)
     elif action == "mail_settings.update":
         target = get(db, MailSettings, "mail")
         check_version(target, versions, "mail_settings")
@@ -412,7 +412,7 @@ def mutate(db, actor, command):
             locker.version += 1
         employee.version += 1
         db.flush()
-        notification(db, command["id"], employee, action, get(db, Locker, target.locker_id))
+        notification(db, command["id"], employee, action, get(db, Locker, target.locker_id), actor)
     elif action in ("admin.create", "admin.update"):
         target = get(db, Admin, p.get("id")) if action.endswith("update") else Admin()
         if "is_initial" in p:

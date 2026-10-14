@@ -1,5 +1,26 @@
 # Guía de operación
 
+## Correos y Microsoft · 1.14
+
+En **Historial → Correos** selecciona un aviso confirmado. Usa **Vista previa
+del correo** para modificar Para, CC, Asunto y Mensaje. Puedes copiar cada campo,
+guardar el borrador local o restablecer el contenido original. Los cambios
+pertenecen a tu cuenta en este equipo y no modifican el registro original.
+
+**Abrir en correo** prepara un mensaje mediante la aplicación predeterminada
+de Windows (Outlook si está configurado así). Revisa la cuenta remitente y los
+destinatarios, y pulsa Enviar desde esa aplicación. SLMS no puede confirmar el
+envío ni la entrega; los avisos originales mantienen su estado Sin envío desde SLMS.
+Si el enlace no funciona o el mensaje es demasiado largo, copia los campos.
+
+Los avisos nuevos incluyen casillero, ubicación, responsable y fecha UTC−06:00.
+El correo de contacto se toma de **Administración → Configurar avisos a HR**.
+Los avisos anteriores conservan su contenido original y también son editables.
+
+**Iniciar con Microsoft**, **Enviar con Microsoft** y el envío automático en
+**Opciones → Microsoft y correo** están previstos, deshabilitados y pendientes
+de integración por TI. El inicio local sigue funcionando.
+
 ## Interfaz e inventario · 1.13
 
 Cada pestaña incluye un icono **ⓘ** junto al título. Coloca el puntero sobre él

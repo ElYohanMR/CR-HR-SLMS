@@ -36,12 +36,8 @@ def run(app):
     QApplication.processEvents()
     wizard.grab().save(str(home() / "configuracion.png"))
     wizard.close()
-    signin = Form(
-        "Iniciar sesión",
-        [("username", "Usuario", "line"), ("password", "Contraseña", "password")],
-        description="Utiliza tu cuenta individual de Samtec Lockers.",
-        accept_label="Entrar",
-    )
+    from .setup import login_form
+    signin = login_form()
     signin.show()
     QApplication.processEvents()
     signin.grab().save(str(home() / "acceso.png"))
@@ -189,6 +185,12 @@ def run(app):
     capture_preferences(window)
     from .smoke_cuts import capture_cuts
     capture_cuts(window, engine, session)
+    from .mail_preview import MailPreview
+    preview = MailPreview(window, dict(window.data["notifications"][0], recipient="persona@example.com"))
+    preview.show()
+    QApplication.processEvents()
+    preview.grab().save(str(home() / "correo-previa.png"))
+    preview.close()
     window.nav.setCurrentRow(7)
     QApplication.processEvents()
     window.grab().save(str(home() / "administracion.png"))

@@ -16,7 +16,7 @@ binary = Path(sys.argv[1]).resolve()
 profile = Path(tempfile.mkdtemp(prefix="slms-package-check-"))
 env = dict(os.environ, SLMS_HOME=str(profile), QT_QPA_PLATFORM="offscreen")
 flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-subprocess.run([str(binary), "--self-test"], env=env, check=True, timeout=40, creationflags=flags)
+subprocess.run([str(binary), "--self-test"], env=env, check=True, timeout=120, creationflags=flags)
 assert (profile / "self-test.json").exists()
 os.environ["SLMS_HOME"] = str(profile)
 

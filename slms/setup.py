@@ -198,7 +198,7 @@ def saved_session_valid(config, session):
         return True
 
 
-def login(config, parent=None):
+def login_form(parent=None):
     form = Form(
         "Iniciar sesión",
         [("username", "Usuario", "line"), ("password", "Contraseña", "password")],
@@ -206,7 +206,15 @@ def login(config, parent=None):
         description="Utiliza tu cuenta individual de Samtec Lockers.",
         accept_label="Entrar",
     )
+    from .microsoft_ui import add_microsoft_login
+    add_microsoft_login(form)
+    form.resize(max(560, form.sizeHint().width()), min(520, form.maximumHeight()))
     form.widgets["password"].returnPressed.connect(form.accept)
+    return form
+
+
+def login(config, parent=None):
+    form = login_form(parent)
     while form.exec() == QDialog.DialogCode.Accepted:
         try:
             response = httpx.post(config["url"] + "/login", json=form.values(), timeout=8, trust_env=False)

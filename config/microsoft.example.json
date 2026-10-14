@@ -1,0 +1,25 @@
+{
+  "documentation_only": true,
+  "implementation_status": "pending_identity_and_graph_connectors",
+  "enabled": false,
+  "identity": {
+    "tenant_id": "",
+    "desktop_client_id": "",
+    "api_client_id": "",
+    "api_scope": "",
+    "redirect_uri": "http://localhost"
+  },
+  "mail": {
+    "enabled": false,
+    "mode": "manual",
+    "sender_mailbox": "",
+    "automatic_on_confirmation": false,
+    "events": [
+      "assignment.assign",
+      "assignment.transfer",
+      "assignment.release",
+      "employee.deactivate"
+    ]
+  },
+  "notes": "Plantilla de planificación para TI. Este archivo no activa funciones ni es leído por esta versión. Nunca colocar secretos en el cliente."
+}

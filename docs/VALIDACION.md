@@ -1,5 +1,21 @@
 # Validación de la entrega
 
+## Versión 1.14.0 · 14 de octubre de 2026
+
+- Vista previa editable con destinatario, CC, asunto y mensaje. Borradores
+  locales cifrados por cuenta y aviso; el registro original queda intacto.
+- Validación de destinatarios y encabezados; codificación de acentos, saltos,
+  ampersand y otros caracteres para mailto. Apertura externa sin declarar envío.
+- Plantillas con responsable, ubicación y hora de Costa Rica. Las bajas se
+  dirigen a HR, sin motivos internos ni notas. Reintentos no duplican avisos.
+- Inicio local conservado. Microsoft y envío automático visibles, deshabilitados
+  y documentados como integración pendiente. No hay aceptación de tokens nuevos.
+- Suite general: 157 pruebas aprobadas. PostgreSQL aislado: 19 pruebas aprobadas.
+  Revisión estática sin errores. Ejecutable Windows comprobado en un perfil
+  independiente, incluidos interfaz, autenticación, cortes y notificaciones.
+- Revisión visual de vista previa, acceso Microsoft y opciones de correo.
+  Las pruebas de apertura interceptan mailto: no se enviaron mensajes reales.
+
 ## Versión 1.13.1 · 13 de octubre de 2026
 
 - Cortes de candado debajo de Inventario. Atajos de navegación actualizados

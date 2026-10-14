@@ -1,5 +1,14 @@
 # Despliegue y recuperación
 
+## Actualización 1.14.0
+
+No requiere migración de esquema. El servidor debe reiniciarse con la nueva
+versión para generar las nuevas plantillas; los avisos anteriores no se reescriben.
+La vista previa guarda borradores locales cifrados y abre mailto, sin enviar
+automáticamente. Consulte MICROSOFT.md (Integracion-Microsoft-TI.md en el paquete)
+para el alcance pendiente de identidad y envío. Los botones previstos no activan
+una integración real; hace falta implementar y validar los conectores con TI.
+
 ## Actualización 1.13.0
 
 La migración 0007 añade lockers.has_padlock (boolean nullable). Los registros

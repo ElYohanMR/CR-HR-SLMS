@@ -7,3 +7,5 @@
 - `site-hd.jpg`: conversión JPEG de SamtecMap.tif (3956 × 2478), proporcionado por el usuario el 6 de octubre de 2026, sin reducción de resolución. `site-map.json` contiene los contornos iniciales realineados; no acredita un levantamiento físico de casilleros.
 
 El tema toma como referencia la cabecera gris `#444444`, el acento naranja `#fa661b` y la fuente Montserrat de samtec.com. Los botones naranjas usan texto oscuro para mejorar la legibilidad. Los estados de casilleros conservan colores funcionales acompañados de texto.
+
+- `microsoft.svg`: símbolo oficial de Microsoft, sin modificaciones, obtenido de https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.svg el 14 de octubre de 2026 para identificar el acceso previsto con Microsoft.

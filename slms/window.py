@@ -1421,9 +1421,10 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.audit_search.setPlaceholderText("Buscar operación, persona, casillero o responsable…")
         row.addWidget(self.audit_search, 1)
         self.button(row, "Cargar historial anterior", self.load_history)
+        self.button(row, "Correos", self.notifications)
         self.actions_button(row, [
             ("Exportar historial cargado", lambda: self.export("audit"), None),
-            ("Ver notificaciones de correo (simuladas)", self.notifications, None),
+            ("Correos y borradores", self.notifications, None),
         ])
         layout.addLayout(row)
         self.audit_table = self.table(layout, ["Fecha / hora", "Operación", "Responsable", "Registro", "Motivo"])
@@ -1463,10 +1464,10 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
 
     def notifications(self):
         dialog = QDialog(self)
-        dialog.setWindowTitle("Correo · modo simulado")
+        dialog.setWindowTitle("Correos y borradores")
         dialog.resize(950, 550)
         layout = QVBoxLayout(dialog)
-        layout.addWidget(QLabel("No se envían correos reales. La integración corporativa se configura con TI."))
+        layout.addWidget(QLabel("Selecciona un aviso para editar el borrador o abrirlo en tu aplicación de correo. No se ha enviado automáticamente."))
         table = self.table(layout, ["Fecha", "Para", "Copia a", "Asunto", "Estado"])
         self.fill(
             table,
@@ -1479,20 +1480,33 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                         ", ".join(n.get("cc", [])),
                         n["subject"],
                         {
-                            "simulado": "Simulado",
+                            "simulado": "Sin envío desde SLMS",
                             "sin_destinatario": "Falta destinatario",
-                            "simulado_sin_hr": "Simulado · falta correo HR",
+                            "simulado_sin_hr": "Sin envío desde SLMS · falta correo HR",
                         }.get(n["status"], n["status"]),
                     ],
                 )
                 for n in self.data["notifications"]
             ],
         )
-        table.cellDoubleClicked.connect(
-            lambda r, c: info(dialog, (self.lookup("notifications", self.selected(table)) or {}).get("body", ""))
-        )
+        def preview(key=None, open_mail=False):
+            from .mail_preview import MailPreview
+            notice = self.lookup("notifications", key or self.selected(table))
+            if not notice:
+                info(dialog, "Selecciona un aviso de la lista.")
+                return
+            view = MailPreview(self, notice)
+            if open_mail:
+                QTimer.singleShot(0, view.open_mail)
+            view.exec()
+        row = QHBoxLayout()
+        layout.addLayout(row)
+        self.button(row, "Vista previa del correo", lambda: preview())
+        self.button(row, "Abrir en correo", lambda: preview(open_mail=True))
+        table.cellDoubleClicked.connect(lambda r, c: preview())
         table.context_actions = lambda key: [
-            ("Ver mensaje", lambda: info(dialog, (self.lookup("notifications", key) or {}).get("body", "")), None),
+            ("Vista previa del correo", lambda: preview(key), None),
+            ("Abrir en correo", lambda: preview(key, True), "editor"),
         ]
         dialog.exec()
 

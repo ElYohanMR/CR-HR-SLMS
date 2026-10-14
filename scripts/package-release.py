@@ -25,6 +25,8 @@ args.output.mkdir(parents=True, exist_ok=True)
 for source, target in (
     ("docs/OPERACION.md", "Guia-de-uso.md"),
     ("docs/TI.md", "Guia-TI.md"),
+    ("docs/MICROSOFT.md", "Integracion-Microsoft-TI.md"),
+    ("config/microsoft.example.json", "Microsoft-configuracion-ejemplo.json"),
     ("docs/VALIDACION.md", "Validacion.md"),
 ):
     shutil.copy2(project / source, release / target)
@@ -68,6 +70,7 @@ subprocess.run(
 for name in (
     "configuracion",
     "acceso",
+    "correo-previa",
     "resumen",
     "mapa",
     "inventario",
