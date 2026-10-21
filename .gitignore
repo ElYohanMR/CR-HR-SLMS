@@ -32,3 +32,19 @@ local-data/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Entregables y material operativo: usar Releases o canal interno de datos
+*.dump
+*.backup
+*.dat
+*.pfx
+*.p12
+*.zip
+*.exe
+*.msi
+*.spec
+outputs/
+release/
+release-*/
+data/
+datos-operativos/

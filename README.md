@@ -1,88 +1,132 @@
-# Samtec Lockers · 1.14.1
+# SLMS — Samtec Locker Management System
 
-Aplicación Windows con servicio central para recepción y Recursos Humanos.
+Gestión de casilleros para Recursos Humanos y Recepción. Aplicación de escritorio
+Windows con servicio central, inventario visual y trazabilidad de operaciones.
 
-La versión 1.14.1 agrega ocho órdenes de numeración en **Opciones → Bloques y filas**, mediante un primer y segundo paso compatibles. Los nuevos bloques y filas usan esos valores y permiten modificarlos antes de crear. Consulta **docs/OPERACION.md** para la guía actualizada.
+**Versión de la aplicación: 1.14.1. Estado: evaluación y piloto controlado.**
+Documentación de entrega actualizada el 20 de octubre de 2026. Este repositorio
+no acredita aprobación corporativa ni despliegue en producción.
 
-La versión 1.2 agrega baja y liberación en una operación, devolución voluntaria, filtro de empleados activos/inactivos y avisos simulados con destinatario de HR configurable. Los casilleros devueltos requieren revisión física antes de volver a asignarse, salvo confirmación explícita de que están vacíos y utilizables.
+## Empezar aquí
 
-La versión 1.1 incorpora la identidad visual de referencia de Samtec: logo, tipografía Montserrat, encabezado gris y acentos naranjas. Corrige el contraste de los formularios en Windows con modo oscuro. El asistente separa la conexión de la cuenta administradora y permite desplazarse en pantallas pequeñas.
-
-## Abrir
-
-En esta computadora, abre **Iniciar Samtec Lockers.cmd**. La distribución independiente se abre con **SamtecLockers.exe**; conserva su carpeta _internal junto al ejecutable.
-
-El asistente inicial permite elegir PostgreSQL local, un servidor corporativo HTTPS o una demostración separada con datos ficticios.
-
-Para tu base de desarrollo:
-
-| Campo | Valor |
+| Necesidad | Documento |
 | --- | --- |
-| Host PostgreSQL | 127.0.0.1 |
-| Puerto | 5432 |
-| Base | samtec_lockers_dev |
-| Usuario PostgreSQL | slms_dev |
-| Contraseña PostgreSQL | La creada en pgAdmin |
-| Usuario de la aplicación | El nombre que elijas |
-| Contraseña de la aplicación | Una nueva, de al menos 10 caracteres |
+| Instalar servidor y conectar puestos | [Guía de despliegue para TI](docs/DESPLIEGUE_TI.md) |
+| Revisar arquitectura, respaldos y seguridad actual | [Referencia técnica](docs/TI.md) |
+| Aprender los procedimientos de operación | [Guía de uso](docs/OPERACION.md) |
+| Evaluar lo pendiente de Microsoft | [Microsoft y correo](docs/MICROSOFT.md) |
+| Revisar Android, iOS y próximas mejoras | [Propuestas de evolución](docs/ROADMAP.md) |
+| Publicar el repositorio privado y los descargables | [Guía GitHub](docs/GITHUB_ENTREGA.md) |
+| Coordinar aceptación y responsables | [Lista de entrega](docs/ENTREGA_TI.md) |
+| Consultar pruebas anteriores y su alcance | [Registro de validación](docs/VALIDACION.md) |
 
-Las cuentas de la aplicación y las credenciales de PostgreSQL son independientes. El asistente crea el esquema mediante migraciones y prepara los dos edificios y el mapa inicial. Si ya existen administradores, conserva sus cuentas y datos. **Configurar conexion.cmd** vuelve a abrir el asistente.
+Los ZIP del programa, el WI y la presentación se publicarán como archivos de una
+**Release privada**. Si todavía no aparece una Release, esos archivos aún no han
+sido publicados. El ZIP automático «Source code» de GitHub contiene código, no
+el ejecutable de Windows. El WI y la presentación requieren revisión documental.
 
-## Funciones implementadas
+## Qué incluye esta versión
 
-- Resumen de ocupación y disponibilidad.
-- Mapa con imagen original, zoom, desplazamiento, bloques móviles y rotación.
-- Contornos editables mediante sus vértices; alta y eliminación de contornos.
-- Planos interiores/exteriores, edificios y pisos configurables.
-- Bloques con filas y columnas configurables; numeración consecutiva o individual.
-- Verificación física de casilleros, individual o por bloque.
-- Empleados, correo opcional, departamento, turno, estado y notas.
-- Asignación, liberación y reasignación atómica con responsable y motivo.
-- Historial de asignaciones y auditoría con valores anteriores y nuevos.
-- Importación CSV con vista previa; exportación de empleados, inventario e historial.
-- Cola local persistente y cifrada; reintentos, conflictos y separación por responsable.
-- Cuentas de administración, operación y consulta.
-- Respaldos PostgreSQL y SQLite.
-- Registro de notificaciones de correo en modo simulado.
+- Mapa satelital o de contornos; edificios, planos interiores/exteriores y pisos.
+- Bloques móviles y rotables, búsqueda, creación de filas y vista previa.
+- Casilleros con numeración, condición, notas y presencia de candado.
+- Cuatro filas y tres columnas como valores iniciales editables; ocho recorridos
+  de numeración mediante dos pasos perpendiculares.
+- Empleados, asignaciones, traslados, devoluciones, bajas y reingresos.
+- Revisiones físicas y seguimiento de disponibilidad: un casillero sin empleado
+  registrado no se considera libre hasta verificarlo.
+- Cortes de candado con responsable, estados y fotografías opcionales.
+- Historial, permisos, búsquedas, ordenación y acciones sobre filas marcadas.
+- Importación de empleados CSV e intercambio de inventario Excel/CSV.
+- Solicitudes locales persistentes, reintentos y detección de conflictos.
+- Borradores de correo editables; apertura en Outlook u otro cliente predeterminado.
+- Ajustes por cuenta/equipo y respaldos manuales de la base central.
 
-## Primera carga
+**Límites actuales:** no hay aplicaciones Android/iOS, inicio Microsoft, envío
+automático de correo ni integración con el padrón de HR. Los controles Microsoft
+son previsiones deshabilitadas; requieren implementación, no solo configuración.
+El envío manual se realiza y se comprueba en la aplicación de correo.
 
-1. Confirma los nombres y códigos en Administración → Edificios.
-2. Revisa los contornos del mapa y agrega los bloques con sus números físicos.
-3. Verifica en sitio qué casilleros están vacíos y utilizables.
-4. Registra empleados o importa la plantilla CSV.
-5. Asigna desde Inventario, Empleados o el bloque del mapa.
-6. Comprueba la confirmación en Solicitudes.
+## Arquitectura actual
 
-E1/E2 y los contornos iniciales son aproximaciones por confirmar. No se generan 2000 casilleros supuestos. Los casilleros nuevos quedan **pendientes de verificar**: no tener un empleado registrado no demuestra que estén vacíos.
+```mermaid
+flowchart LR
+  A[Windows · Recepción] --> H[HTTPS · Proxy de TI]
+  B[Windows · RH] --> H
+  H --> S[Servicio SLMS · FastAPI en Windows]
+  S --> D[(PostgreSQL)]
+```
 
-## Sin conexión
+Cada puesto mantiene una copia local cifrada y su cola. PostgreSQL central es la
+fuente de confirmación. Los clientes no necesitan credenciales de PostgreSQL.
+El reloj de una laptop no decide quién obtiene un casillero ante un conflicto.
 
-Se conserva la última información recibida y se muestra su fecha. Con una identidad previamente autenticada se pueden registrar solicitudes, que permanecen pendientes hasta ser aceptadas por el servidor.
+El servicio utiliza configuración Windows DPAPI ligada a la cuenta que la creó.
+No es todavía un servicio nativo instalado automáticamente ni un servidor Linux
+o contenedor listo para desplegar. TI debe supervisar su proceso y validar HTTPS.
 
-Cada solicitud conserva su UUID, equipo, fecha local y versiones consultadas. El servidor verifica permisos, estado y disponibilidad, y registra la fecha de recepción. Reenviar una solicitud devuelve el resultado anterior. Un cambio incompatible genera un conflicto: no se sobrescribe automáticamente ni se da prioridad retroactiva al reloj de una computadora.
+## Ejecutar desde el código
 
-Después de ocho errores temporales consecutivos se requiere reintento manual. Los conflictos se resuelven revisando los registros actuales y creando una solicitud nueva. Las colas de instalaciones diferentes están separadas.
+Entorno de referencia: Windows, Python 3.13 de 64 bits y PostgreSQL 18 para el
+servidor compartido. Las dependencias están fijadas en `requirements.txt`.
+Desde PowerShell, en la raíz del repositorio:
 
-## Datos y desarrollo
+```powershell
+.\scripts\setup.ps1
+& "$env:LOCALAPPDATA\SamtecLockers\venvs\dev\Scripts\python.exe" -m slms
+```
 
-Los datos locales se guardan bajo **%LOCALAPPDATA%/SamtecLockers/data**, fuera de OneDrive. La configuración privada, la sesión y el contenido de la cola usan Windows DPAPI, vinculado al usuario Windows. Las cuentas emplean PBKDF2 con sal individual; la base central impide asignaciones activas duplicadas.
+La política de ejecución de scripts debe ser la permitida por TI. El asistente
+permite PostgreSQL local, conexión a servidor HTTPS o demostración independiente.
+La demostración de cada equipo tiene su propia base; no comparte datos con otros.
 
-- Python 3.13 de 64 bits.
-- requirements.in: dependencias directas; requirements.txt: versiones fijadas.
-- scripts/setup.ps1: prepara el entorno externo a OneDrive.
-- slms/: interfaz, dominio, servidor y sincronización.
-- migrations/: migraciones Alembic.
-- tests/: pruebas de concurrencia, recuperación, permisos, mapa y respaldos.
-- scripts/build.ps1: crea el ejecutable en %LOCALAPPDATA%/SamtecLockers/release.
-- python -m slms: iniciar desde el entorno del proyecto.
-- python -m pytest -q: ejecutar pruebas SQLite e interfaz.
-- python tests/run_postgres.py: probar contra un clúster PostgreSQL temporal y separado.
+```powershell
+# Pruebas aisladas e interfaz sin ventanas visibles
+& "$env:LOCALAPPDATA\SamtecLockers\venvs\dev\Scripts\python.exe" -m pytest -q
+# Pruebas con un clúster PostgreSQL 18 temporal; nunca la base operativa
+& "$env:LOCALAPPDATA\SamtecLockers\venvs\dev\Scripts\python.exe" tests/run_postgres.py
+# Distribución Windows
+.\scripts\build.ps1
+```
 
-## Alcance
+No se han repetido las pruebas funcionales por esta actualización exclusivamente
+documental. Consultar el registro de validación y ejecutar el plan de aceptación
+en el entorno de TI antes de autorizar el piloto o la operación.
 
-Esta entrega permite pruebas funcionales y el levantamiento inicial. La conexión a tu base se termina en el asistente local. El correo permanece simulado y la autenticación utiliza cuentas propias. Microsoft Graph / Entra ID y el despliegue corporativo con HTTPS dependen de la infraestructura que TI suministre.
+## Código y datos
 
-Regla inicial: un casillero vigente por empleado. Las dimensiones del bloque se fijan al crearlo; las posiciones, números y condiciones se editan sin cambiar la identidad de los casilleros. El historial presenta inicialmente los últimos 2000 eventos y permite cargar anteriores.
+| Carpeta | Contenido |
+| --- | --- |
+| `slms/` | Interfaz, API, reglas, sincronización y configuración |
+| `migrations/` | Cambios de esquema Alembic |
+| `assets/` | Logo, fuente, mapas iniciales y recursos gráficos |
+| `scripts/` | Preparación, compilación y utilidades de entrega |
+| `tests/` | Pruebas de dominio, permisos, concurrencia e interfaz |
+| `config/` | Ejemplo de planificación Microsoft, sin secretos |
+| `docs/` | Operación, despliegue, validación y propuestas |
 
-No se publican datos ni código automáticamente. El repositorio remoto se publicará privado al finalizar la revisión acordada. Consulta docs/OPERACION.md y docs/TI.md.
+La base operativa, posiciones de bloques creados, empleados, asignaciones y
+evidencias **no forman parte del código ni del ejecutable**. Los mapas iniciales
+de `assets/` no sustituyen un respaldo del inventario configurado. Su transferencia
+se acuerda con TI por un canal interno; no se suben respaldos ni listas de HR a Git.
+
+El 15 de octubre se preparó un entorno local con 118 bloques y 1.416 casilleros,
+sin empleados y con casilleros pendientes de verificación. Es una referencia
+histórica de esa base, no un conjunto de datos incluido ni una cifra garantizada
+para instalaciones nuevas. El formato de cuatro dígitos se aplicó a esos datos;
+la versión actual no fuerza ese formato para todos los números futuros.
+
+## Acceso y evolución
+
+El repositorio debe publicarse **privado**, con acceso explícito para los revisores.
+Un enlace no sustituye la invitación a GitHub. La cuenta administradora inicial
+de SLMS debe quedar bajo custodia definida por TI; es distinta del propietario
+del repositorio y de la cuenta de Windows que ejecuta el servicio.
+
+La evolución propuesta prioriza despliegue y recuperación, Microsoft, ajustes
+administrativos completos, Android y posteriormente iOS. Cada etapa requiere
+validación de alcance y aceptación: [Roadmap](docs/ROADMAP.md).
+
+No se agrega una licencia de código abierto en esta entrega. La organización
+debe definir las condiciones de uso y transferencia. Los recursos de terceros
+mantienen sus atribuciones: [recursos visuales](assets/README.md).

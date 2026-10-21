@@ -1,5 +1,9 @@
 # Despliegue y recuperación
 
+Para la instalación paso a paso, rutas, supervisión del servicio y limitaciones
+de certificados del cliente actual, consultar [DESPLIEGUE_TI.md](DESPLIEGUE_TI.md).
+Las mejoras propuestas están en [ROADMAP.md](ROADMAP.md).
+
 ## Actualización 1.14.0
 
 No requiere migración de esquema. El servidor debe reiniciarse con la nueva
@@ -32,7 +36,7 @@ En desarrollo escucha en 127.0.0.1:8765. El lanzador lo inicia si hace falta y l
 1. Proveer una base PostgreSQL dedicada y una cuenta propietaria para migraciones. TI puede separar posteriormente el rol de migraciones del operativo.
 2. Ejecutar el asistente bajo la cuenta Windows que alojará el servicio. Configurar la base y crear el primer administrador.
 3. Supervisar **SamtecLockers.exe --server** o **python -m slms --server** mediante el mecanismo aprobado por TI.
-4. Colocar un proxy HTTPS con certificado corporativo delante del servicio local. Mantener loopback si ambos están en el mismo equipo. Limitar peticiones a 9 MB y a las redes autorizadas.
+4. Colocar un proxy HTTPS delante del servicio local y validar que su certificado sea reconocido por el cliente SLMS. Una CA corporativa instalada en Windows no basta en esta versión; consultar DESPLIEGUE_TI.md. Mantener loopback si ambos están en el mismo equipo. Limitar peticiones a 9 MB y a las redes autorizadas.
 5. Instalar la distribución completa en los clientes, elegir Conectar a servidor de TI e indicar la dirección HTTPS.
 6. Crear cuentas de administración, operación y consulta.
 
