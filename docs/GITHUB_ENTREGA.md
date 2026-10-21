@@ -52,12 +52,17 @@ conviene la organización que TI determine. El enlace a Releases también es pri
    - `Samtec-Lockers-Codigo.zip` (código del commit documentado).
    - `SLMS_Instruccion_de_trabajo.docx`.
    - `SLMS_Capacitacion_RH_Recepcion.pptx`.
+   - `SLMS_Inventario_Inicial_2026-10-20.xlsx`.
+   - `SLMS_Contornos_2026-10-20.json`.
+   - `SLMS_Plantilla_Empleados.xlsx` y `SLMS_Plantilla_Empleados.csv`.
+   - `00_LEER_PRIMERO.txt`.
    - `SHA256.json`.
    - `PROCEDENCIA.txt`.
 6. Marcar **This is a pre-release** para identificar su etapa de evaluación.
 7. Comprobar los adjuntos y pulsar **Publish release**, o Save draft para revisarla.
 
-El binario sigue siendo 1.14.1: la actualización de esta entrega es documental.
+El binario sigue siendo 1.14.1: esta entrega añade documentación, archivos de carga inicial y una utilidad de
+restauración de contornos para TI, sin modificar el ejecutable.
 Las Releases permiten distribuir el programa sin añadir sus archivos generados
 al historial Git. No adjuntar la base local ni la carpeta completa de AppData.
 
@@ -68,7 +73,8 @@ al historial Git. No adjuntar la base local ni la carpeta completa de AppData.
 | Código, pruebas, migraciones, recursos y guías Markdown | Repositorio |
 | EXE con _internal, dentro del ZIP | Release |
 | WI y presentación editables | Release; copia aprobada en SharePoint si corresponde |
-| Inventario operativo, empleados, fotografías y backups | Canal interno de datos definido por TI |
+| Inventario inicial autorizado sin personas, contornos y plantillas vacías | Release privada; ver [Carga inicial](CARGA_INICIAL.md) |
+| Listas de empleados, fotografías, asignaciones y backups | Canal interno de datos definido por TI |
 | Contraseñas, claves, tokens y archivos connection.dat/session.dat | Gestor de secretos/perfil protegido; nunca GitHub |
 
 `.gitignore` reduce inclusiones accidentales; no borra archivos ya versionados

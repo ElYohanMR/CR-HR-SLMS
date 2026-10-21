@@ -17,6 +17,7 @@ no acredita aprobación corporativa ni despliegue en producción.
 | Evaluar lo pendiente de Microsoft | [Microsoft y correo](docs/MICROSOFT.md) |
 | Revisar Android, iOS y próximas mejoras | [Propuestas de evolución](docs/ROADMAP.md) |
 | Publicar el repositorio privado y los descargables | [Guía GitHub](docs/GITHUB_ENTREGA.md) |
+| Cargar los 118 bloques y preparar empleados | [Carga inicial](docs/CARGA_INICIAL.md) |
 | Coordinar aceptación y responsables | [Lista de entrega](docs/ENTREGA_TI.md) |
 | Consultar pruebas anteriores y su alcance | [Registro de validación](docs/VALIDACION.md) |
 
@@ -105,16 +106,16 @@ en el entorno de TI antes de autorizar el piloto o la operación.
 | `config/` | Ejemplo de planificación Microsoft, sin secretos |
 | `docs/` | Operación, despliegue, validación y propuestas |
 
-La base operativa, posiciones de bloques creados, empleados, asignaciones y
-evidencias **no forman parte del código ni del ejecutable**. Los mapas iniciales
-de `assets/` no sustituyen un respaldo del inventario configurado. Su transferencia
-se acuerda con TI por un canal interno; no se suben respaldos ni listas de HR a Git.
+El inventario inicial se entrega como archivo de la **Release privada**, separado
+del código y del ejecutable. La extracción del 20 de octubre de 2026 contiene
+**118 bloques y 1.416 casilleros**, con posiciones, rotación y números de cuatro
+dígitos. No incluye empleados, cuentas, asignaciones ni evidencias. Se acompaña
+de los contornos actuales del mapa y de una plantilla de empleados vacía con
+campos obligatorios y opcionales. Seguir [Carga inicial](docs/CARGA_INICIAL.md).
 
-El 15 de octubre se preparó un entorno local con 118 bloques y 1.416 casilleros,
-sin empleados y con casilleros pendientes de verificación. Es una referencia
-histórica de esa base, no un conjunto de datos incluido ni una cifra garantizada
-para instalaciones nuevas. El formato de cuatro dígitos se aplicó a esos datos;
-la versión actual no fuerza ese formato para todos los números futuros.
+La base operativa completa, las credenciales y las listas de HR quedan fuera de
+Git. La plantilla no contiene datos personales. La versión actual no fuerza
+cuatro dígitos para todas las numeraciones que se creen después de esta carga.
 
 ## Acceso y evolución
 

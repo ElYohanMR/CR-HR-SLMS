@@ -12,6 +12,10 @@ ejecutable para esta actualización documental.
 - **Samtec-Lockers-Codigo.zip:** código y documentación del commit de entrega.
 - **SLMS_Instruccion_de_trabajo.docx:** procedimientos de uso y permisos.
 - **SLMS_Capacitacion_RH_Recepcion.pptx:** capacitación con notas de exposición.
+- **SLMS_Inventario_Inicial_2026-10-20.xlsx:** 118 bloques y 1.416 casilleros, sin empleados.
+- **SLMS_Contornos_2026-10-20.json:** contornos del mapa actual; cargar antes del inventario.
+- **SLMS_Plantilla_Empleados.xlsx / .csv:** plantilla vacía y guía de campos obligatorios/opcionales.
+- **00_LEER_PRIMERO.txt:** orden de instalación y carga.
 - **SHA256.json / PROCEDENCIA.txt:** integridad y relación con la versión fuente.
 
 Los documentos editables quedan sujetos a revisión y control documental de Samtec.
@@ -34,13 +38,16 @@ documentadas en docs/ROADMAP.md. No están incluidos como funciones actuales.
 Configurar un único servidor central y conectar los puestos a su URL HTTPS.
 La versión actual requiere validar la confianza del certificado en el cliente
 HTTPX/certifi; no basta instalar una CA corporativa en Windows. Ver guía de TI.
-GitHub no aloja el servicio operativo. La base de datos y el inventario mapeado
-deben transferirse separadamente: no están dentro de estos descargables.
+GitHub no aloja el servicio operativo. La Release incluye únicamente la distribución
+inicial del inventario y los contornos, sin empleados ni asignaciones. La base completa
+y sus credenciales no se incluyen. Seguir docs/CARGA_INICIAL.md antes de importar.
 
 ## Validación
 
 Se comprobó integridad de los archivos de entrega y correspondencia del código
 funcional con el paquete 1.14.1 anterior. Esta entrega cambia documentación y
-configuración del repositorio; no repite ni sustituye las pruebas funcionales
-anteriores ni la aceptación en la red de TI. Consultar docs/VALIDACION.md y
+configuración del repositorio y añade una utilidad de contornos. Se probó la carga
+completa en una base SQLite temporal mediante la API: 118 bloques, 1.416 casilleros,
+numeración y geometría conservadas, sin empleados ni asignaciones. No sustituye
+las pruebas anteriores ni la aceptación sobre PostgreSQL y la red de TI. Consultar docs/VALIDACION.md y
 completar docs/ENTREGA_TI.md en el piloto.

@@ -8,7 +8,9 @@ Marcar únicamente lo que haya sido verificado por el responsable correspondient
 - [ ] Repositorio privado accesible a los revisores invitados.
 - [ ] Release con ejecutable, código de la etiqueta, WI, presentación y SHA-256.
 - [ ] Guías de despliegue, operación, Microsoft y propuestas futuras revisadas.
-- [ ] Datos operativos transferidos separadamente, cuando se autorice su carga.
+- [ ] Inventario inicial, contornos y plantillas vacías incluidos en la Release privada.
+- [ ] Carga en servidor nuevo: 118 bloques, 1.416 casilleros, sin empleados ni asignaciones.
+- [ ] Datos personales y respaldos transferidos separadamente, cuando se autorice su carga.
 
 ## Responsabilidades a completar por TI y RH
 

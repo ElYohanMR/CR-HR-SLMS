@@ -1,5 +1,24 @@
 # Validación de la entrega
 
+## Preparación para TI · 20 de octubre de 2026
+
+- El ejecutable y el código funcional de SLMS permanecen en 1.14.1.
+- Extracción de inventario de solo lectura: 118 bloques y 1.416 casilleros.
+- Excel contrastado con los valores originales y leído con el importador real.
+- Importación completa mediante API en SQLite temporal: geometría, rotación,
+  numeración de cuatro dígitos y posiciones internas conservadas. Todos pendientes,
+  sin empleados ni asignaciones. Se rechaza repetir la carga inicial.
+- Contornos aplicados mediante API en esa base vacía. La utilidad rechaza un destino
+  con inventario y comprueba la imagen antes de preparar cambios.
+- Ocho pruebas de la utilidad aprobadas: traducción de edificios, versión actual,
+  ausencia de escrituras en validación, destino vacío, imagen y plano ambiguo.
+- Plantilla de empleados vacía; encabezados CSV compatibles. Alta con campos
+  opcionales vacíos aceptada y falta de apellido obligatorio rechazada.
+- Hojas revisadas visualmente y archivos XLSX reabiertos. Identificadores guardados
+  como texto, incluidos los ceros iniciales. Guías de despliegue y enlaces revisados.
+- Estas verificaciones no ejecutaron escrituras en la base real ni repitieron la
+  suite general. Falta aceptación en PostgreSQL y red corporativa de TI.
+
 ## Versión 1.14.1 · 14 de octubre de 2026
 
 - Orden de numeración configurable mediante dos pasos perpendiculares: ocho

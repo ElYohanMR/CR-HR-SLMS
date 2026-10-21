@@ -145,7 +145,12 @@ El inventario mapeado pertenece a la base local del autor. Acordar una de estas 
   alta nueva según la plantilla. Configurar planos/contornos por separado cuando
   corresponda: la hoja de inventario no sustituye todo el respaldo.
 
-Transferir datos por un canal interno separado de GitHub. Validar números únicos,
+Para iniciar sin empleados, esta entrega ya incluye Excel de inventario y contornos
+autorizados para la Release privada. Seguir [Carga inicial](CARGA_INICIAL.md):
+restaurar primero los contornos y después importar el Excel. No copiar el perfil
+local ni las credenciales del autor.
+
+Transferir el resto de datos por un canal interno definido por TI. Validar números únicos,
 filas/columnas, posiciones, planos, cantidades y disponibilidad física. Importar
 empleados con la plantilla CSV (1–1.000 nuevos por archivo) conserva los IDs como
 texto; no usar la ausencia en un archivo para dar de baja automáticamente.
