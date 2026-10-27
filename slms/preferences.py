@@ -8,6 +8,7 @@ from .numbering import DEFAULT_FIRST, DEFAULT_SECOND, normalize_order
 DEFAULTS = {
     "ui_scale": 100,
     "satellite": True,
+    "sync_seconds": 10,
     "block": {
         "building_id": "",
         "side": "N",
@@ -33,6 +34,8 @@ def normalize_preferences(raw):
         result["ui_scale"] = raw["ui_scale"]
     if type(raw.get("satellite")) is bool:
         result["satellite"] = raw["satellite"]
+    if type(raw.get("sync_seconds")) is int and 5 <= raw["sync_seconds"] <= 300:
+        result["sync_seconds"] = raw["sync_seconds"]
     for section in ("block", "employee"):
         values = raw.get(section)
         if not isinstance(values, dict):
@@ -78,6 +81,8 @@ class Preferences:
         for table in self.findChildren(QTableWidget):
             table.verticalHeader().setDefaultSectionSize(round(30 * scale / 100))
         self.map.set_satellite(self.preferences["satellite"])
+        if hasattr(self, "timer"):
+            self.timer.setInterval(self.preferences["sync_seconds"] * 1000)
 
     def save_preferences(self, values):
         values = normalize_preferences(values)

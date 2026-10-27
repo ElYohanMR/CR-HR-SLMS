@@ -58,6 +58,16 @@ class SettingsDialog(QDialog):
         self.combo(form, "ui_scale", "Tamaño", [(f"{s}%" + (" · normal" if s == 100 else ""), s) for s in SCALES])
 
         form = self.page(
+            "Sincronización", "Actualización con el servidor",
+            "Elige cada cuánto consultar los cambios de otros usuarios. "
+            "Puedes usar Sincronizar ahora en cualquier momento. "
+            "Los cambios que guardes se intentan enviar de inmediato.",
+        )
+        self.number(form, "sync_seconds", "Actualizar cada", 5, 300)
+        self.widgets["sync_seconds"].setSuffix(" segundos")
+        form.addRow(QLabel("Valor inicial: 10 segundos. Intervalo permitido: 5 a 300 segundos."))
+
+        form = self.page(
             "Mapa",
             "Vista del mapa",
             "Puedes mostrar la imagen satelital o trabajar solo con contornos y bloques. "

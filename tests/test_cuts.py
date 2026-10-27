@@ -29,9 +29,10 @@ def latest(client, id):
     return next(e for e in client.get("/snapshot").json()["cut_requests"] if e["id"] == id)
 
 
-def create(client):
+def create(client, locker_id=None, employee_id=None):
     snapshot = client.get("/snapshot").json()
-    employee, locker = snapshot["employees"][0], snapshot["lockers"][0]
+    employee = next(e for e in snapshot["employees"] if e["id"] == employee_id) if employee_id else snapshot["employees"][0]
+    locker = next(e for e in snapshot["lockers"] if e["id"] == locker_id) if locker_id else snapshot["lockers"][0]
     request = cmd("cut.create", {"employee_id": employee["id"], "locker_id": locker["id"],
                                 "supervisor": "Supervisora ficticia", "reason": "Llaves extraviadas",
                                 "channel": "teams"},
@@ -71,7 +72,12 @@ def test_complete_case_original_photos_and_audit(system):
     item = latest(client, item["id"])
     assert item["status"] == "finalizada" and item["completed_by"] == session["actor"]["id"]
     assert item["identity_verified"] and item["performed_at"]
-    assert snapshot["lockers"] == snapshot_before["lockers"]
+    before_locker = next(e for e in snapshot_before["lockers"] if e["id"] == item["locker_id"])
+    after_locker = next(e for e in snapshot["lockers"] if e["id"] == item["locker_id"])
+    assert before_locker["condition"] == "mantenimiento"
+    assert after_locker["condition"] == before_locker["condition_after_cut"]
+    assert after_locker["condition_after_cut"] is None
+    assert after_locker["version"] == before_locker["version"] + 1
     assert snapshot["assignments"] == snapshot_before["assignments"]
     assert snapshot["employees"] == snapshot_before["employees"]
     evidence = snapshot["cut_evidence"][0]

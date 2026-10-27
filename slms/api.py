@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import hashlib
 import logging
 import secrets
@@ -8,7 +9,7 @@ import time
 import uuid
 from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import select, text
+from sqlalchemy import and_, or_, select, text
 from sqlalchemy.orm import sessionmaker
 from .database import password_matches
 from .models import (
@@ -141,7 +142,8 @@ def create_app(engine, installation="test", demo=False):
             if engine.dialect.name == "postgresql":
                 db.execute(text("SELECT pg_advisory_xact_lock(731962401)"))
             result = {"at": now(), "demo": demo, "features": {"inspections": True, "inventory_batch": True, "padlock_cuts": True,
-                                                           "optional_cut_photos": True, "locker_padlock": True}}
+                                                           "optional_cut_photos": True, "locker_padlock": True,
+                                                           "cut_maintenance": True, "audit_date_range": True}}
             for name, model in (
                 ("buildings", Building),
                 ("plans", Plan),
@@ -159,7 +161,7 @@ def create_app(engine, installation="test", demo=False):
             ):
                 query = select(model)
                 if name in ("audit", "notifications"):
-                    query = query.order_by(model.at.desc()).limit(2000)
+                    query = query.order_by(model.at.desc(), model.id).limit(2000)
                 items = [record(item) for item in db.scalars(query)]
                 if name in ("blocks", "lockers"):
                     result["archived_" + name] = [item for item in items if item.get("deleted_at")]
@@ -204,13 +206,29 @@ def create_app(engine, installation="test", demo=False):
             raise HTTPException(500, "La operación no pudo completarse. Se conservará para reintentar.")
 
     @app.get("/audit")
-    def audit(offset: int = 0, authorization: str | None = Header(default=None)):
+    def audit(offset: int = 0, date_from: date | None = None, date_to: date | None = None,
+              before_at: str | None = None, before_id: str | None = None,
+              authorization: str | None = Header(default=None)):
         actor(authorization)
+        query = select(Audit)
+        if (date_from is None) != (date_to is None):
+            raise HTTPException(400, "Indica las dos fechas del período.")
+        if date_from is not None:
+            if date_from > date_to or date_to == date.max:
+                raise HTTPException(400, "Revisa las fechas: Desde no puede ser posterior a Hasta.")
+            zone = ZoneInfo("America/Costa_Rica")
+            start = datetime.combine(date_from, datetime.min.time(), zone).astimezone(timezone.utc).isoformat()
+            end = datetime.combine(date_to + timedelta(days=1), datetime.min.time(), zone).astimezone(timezone.utc).isoformat()
+            query = query.where(Audit.at >= start, Audit.at < end)
+        if (before_at is None) != (before_id is None):
+            raise HTTPException(400, "La referencia del historial está incompleta.")
+        if before_at is not None:
+            query = query.where(or_(Audit.at < before_at, and_(Audit.at == before_at, Audit.id > before_id)))
         with sessions() as db:
             return [
                 record(x)
                 for x in db.scalars(
-                    select(Audit).order_by(Audit.at.desc(), Audit.id).offset(max(0, offset)).limit(1000)
+                    query.order_by(Audit.at.desc(), Audit.id).offset(max(0, offset)).limit(1000)
                 )
             ]
 

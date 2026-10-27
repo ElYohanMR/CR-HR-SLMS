@@ -35,6 +35,9 @@ def main():
     from .window import Window
     from .theme import apply_theme
 
+    from .windows_identity import configure_taskbar_identity
+
+    configure_taskbar_identity()
     app = QApplication(sys.argv)
     app.setApplicationName("Samtec Lockers")
     app.setOrganizationName("Samtec Lockers")

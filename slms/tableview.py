@@ -67,6 +67,15 @@ def enable_sorting(table):
 
 
 def fill_table(table, rows):
+    # Tables are read-only; retain existing items, checks, sort and scroll position
+    # when a poll produces the same display values. Store immutable values so
+    # caller-side mutations are still detected on the next refresh.
+    signature = (
+        tuple(table.horizontalHeaderItem(c).text() for c in range(table.columnCount())),
+        tuple((key, tuple(str(v if v is not None else "") for v in values)) for key, values in rows),
+    )
+    if signature == getattr(table, "_display_signature", None) and table.rowCount() == len(rows):
+        return
     checked = set(checked_ids(table))
     current = table.item(table.currentRow(), 0)
     selected = current.data(Qt.ItemDataRole.UserRole) if current else None
@@ -101,6 +110,7 @@ def fill_table(table, rows):
                     break
         table.blockSignals(signals)
         table.setUpdatesEnabled(updates)
+    table._display_signature = signature
 
 
 def checked_ids(table):

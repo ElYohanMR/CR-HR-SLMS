@@ -20,6 +20,24 @@ def texts(table, column=0):
     return [table.item(row, column).text() for row in range(table.rowCount())]
 
 
+def test_unchanged_refresh_reuses_cells_and_mutated_values_update(table):
+    rows = [("one", ["1", "Uno", "01/02/2026 08:00:00"]), ("two", ["2", "Dos", "02/02/2026 08:00:00"])]
+    Window.fill(None, table, rows)
+    table.item(0, 0).setCheckState(Qt.CheckState.Checked)
+    table.selectRow(0)
+    table.sortItems(0, Qt.SortOrder.DescendingOrder)
+    item = table.item(1, 0)
+    Window.fill(None, table, rows)
+    assert table.item(1, 0) is item
+    assert item.checkState() == Qt.CheckState.Checked
+    assert Window.selected(None, table) == "one"
+    rows[0][1][1] = "Nombre actualizado"
+    Window.fill(None, table, rows)
+    assert table.item(1, 1).text() == "Nombre actualizado"
+    assert table.item(1, 0).checkState() == Qt.CheckState.Checked
+    assert Window.selected(None, table) == "one"
+
+
 def test_header_clicks_toggle_and_keep_whole_records(table, qtbot):
     rows = [("ten", ["10", "Diez", "02/01/2026 09:00:00"]),
             ("two", ["002", "Dos", "31/12/2025 23:00:00"]),

@@ -134,6 +134,20 @@ def apply_cut(db, actor, command):
     else:
         raise RuleError("Operación de corte desconocida.")
     db.flush()
+    if action in ("cut.create", "cut.complete", "cut.cancel"):
+        locker = get(db, Locker, target.locker_id, include_deleted=True)
+        previous_locker = record(locker)
+        if action == "cut.create":
+            locker.condition_after_cut = locker.condition
+            locker.condition = "mantenimiento"
+        elif locker.condition_after_cut is not None:
+            locker.condition = locker.condition_after_cut
+            locker.condition_after_cut = None
+        locker.version += 1
+        db.add(Audit(command_id=command["id"], actor_id=actor.id,
+                     action="locker.cut_maintenance", target_id=locker.id,
+                     before=previous_locker, after=record(locker),
+                     reason=f"Solicitud de corte {target.id}: {STATUSES[target.status]}."))
     db.add(Audit(command_id=command["id"], actor_id=actor.id, action=action, target_id=target.id,
                  before=before, after=record(target), reason=str(p.get("reason", ""))))
     return {"status": "confirmada", "message": "Solicitud de corte confirmada por el servidor.",

@@ -80,6 +80,8 @@ class Locker(Entity, Base):
     # Zero-based physical position; row 0 is the top and column 0 is the right edge.
     column: Mapped[int] = mapped_column(Integer)
     condition: Mapped[str] = mapped_column(String(20), default="pendiente")
+    # Physical condition to restore when the active padlock-cut request closes.
+    condition_after_cut: Mapped[str | None] = mapped_column(String(20), nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     has_padlock: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
     deleted_at: Mapped[str | None] = mapped_column(String(40), nullable=True)

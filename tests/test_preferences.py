@@ -39,6 +39,26 @@ def test_bad_saved_preferences_fall_back_without_sharing_defaults():
     assert DEFAULTS["block"]["rotation"] == 10
 
 
+def test_sync_interval_applies_cancels_and_is_per_account(window, qtbot):
+    assert window.timer.interval() == 10000
+    d = SettingsDialog(window.preferences, window.data["buildings"], window.save_preferences, window)
+    qtbot.addWidget(d)
+    d.widgets["sync_seconds"].setValue(45)
+    d.apply_button.click()
+    assert window.timer.interval() == 45000 and window.timer.isActive()
+    d.widgets["sync_seconds"].setValue(60)
+    d.reject()
+    window.load_preferences()
+    assert window.preferences["sync_seconds"] == 45
+    assert window.timer.interval() == 45000
+    window.session["actor"]["id"] = "another-account"
+    window.load_preferences()
+    window.apply_preferences()
+    assert window.preferences["sync_seconds"] == 10 and window.timer.interval() == 10000
+    for invalid in (0, -1, 4, 301, True, "30", None):
+        assert normalize_preferences({"sync_seconds": invalid})["sync_seconds"] == 10
+
+
 def test_apply_cancel_restore_and_per_account_persistence(window, qtbot):
     def dialog():
         result = SettingsDialog(window.preferences, window.data["buildings"], window.save_preferences, window)

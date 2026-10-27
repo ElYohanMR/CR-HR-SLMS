@@ -1,101 +1,54 @@
-# Publicar el proyecto privado y entregarlo a TI
+# Actualizar SLMS desde GitHub Desktop
 
-Guía para Yohan. Preparada el 20 de octubre de 2026.
-El proyecto ya tiene un repositorio Git local y rama `main`. No crear una carpeta
-nueva dentro del proyecto ni volver a inicializarlo. Esta guía no publica nada por sí sola.
+Revisión del 27 de octubre de 2026. Versión de entrega: 1.14.5.
+Remoto existente: https://github.com/ElYohanMR/CR-HR-SLMS, rama `main`.
+No crear otro repositorio ni usar Publish repository para esta actualización.
 
-## 1. Abrir el proyecto en GitHub Desktop
+## Subir los cambios del código
 
-1. Abrir GitHub Desktop e iniciar sesión con la cuenta deseada.
-2. Elegir **File → Add local repository → Choose**.
-3. Seleccionar la carpeta actual de `CR-HR-SLMS-Samtec_Locker_Management_System`.
-4. Pulsar **Add repository** y comprobar que no sea otro proyecto, como TEC-App.
-5. Revisar Changes. Si hay cambios propios pendientes, revisarlos y crear el commit
-   antes de publicar. No incluir bases, credenciales, listas de empleados o respaldos.
+1. Abrir el repositorio **CR-HR-SLMS** en GitHub Desktop. Si no aparece, usar
+   File > Add local repository y elegir la carpeta del proyecto.
+2. Comprobar Current branch: **main**, y revisar la lista Changes.
+3. Mantener seleccionados los cambios de esta entrega. El borrado de `assets/site.png`
+   elimina el mapa anterior sin uso; la aplicación utiliza `assets/site-hd.jpg`.
+4. En Summary escribir: **Preparar SLMS 1.14.5 para revisión de RH y TI**.
+5. En Description escribir: **Mantenimiento automático por cortes, historial por
+   fechas y diferencias, sincronización configurable, mejoras del mapa y guías actualizadas.**
+6. Pulsar **Commit to main** y después **Push origin**. Si aparece Fetch origin,
+   pulsarlo para comprobar el remoto. Si hay cambios remotos, revisarlos antes del envío.
+7. Usar Repository > View on GitHub y comprobar el nuevo commit, README y versión 1.14.5.
 
-## 2. Crear el remoto privado
+## Programa compilado y documentos
 
-1. Pulsar **Publish repository**.
-2. Nombre sugerido: `CR-HR-SLMS`.
-3. Descripción: `Sistema de gestión de casilleros para Recursos Humanos y Recepción. Versión para revisión de TI y piloto controlado.`
-4. Mantener marcada **Keep this code private**.
-5. Propietario: cuenta personal si la entrega empieza allí; organización de la
-   empresa si TI proporciona una y concede permiso para crear el repositorio.
-6. Pulsar **Publish repository**.
-7. Elegir **Repository → View on GitHub** y comprobar la etiqueta **Private**,
-   el README nuevo, la rama `main` y los documentos de `docs/`.
+GitHub Desktop sube los archivos versionados. El ejecutable y sus dependencias
+se distribuyen como ZIP por el canal interno de Samtec, junto con los documentos
+de uso y del servidor. No añadir el EXE, ZIP ni la carpeta AppData al repositorio.
 
-No crear otro repositorio vacío desde la web si se sigue este recorrido de Desktop.
-Si ya existe un remoto, comprobar primero su dirección y propietario antes de cambiarlo.
+La carpeta interna Documentos importantes contiene los dos WI, las dos presentaciones,
+el inventario inicial, los contornos y las plantillas de empleados revisadas.
+Los documentos son material para revisión de RH y TI, no una aprobación corporativa.
 
-## 3. Invitar a TI
+## Etiqueta y Release opcionales
 
-1. Pedir los nombres de usuario GitHub de los revisores.
-2. En GitHub: **Settings → Collaborators → Add people** (el nombre varía en organizaciones).
-3. Seleccionar las cuentas correctas y enviar las invitaciones.
-4. Esperar a que las acepten y comprobar que pueden abrir el repositorio.
-5. Compartir entonces el enlace mediante el correo interno.
+Después de subir el commit, puede crearse una Release de evaluación con etiqueta
+`v1.14.5`, dirigida a ese commit, y las notas de [RELEASE_1.14.5.md](RELEASE_1.14.5.md).
+Seleccionar **This is a pre-release**. No reutilizar una etiqueta ya publicada.
 
-Un repositorio privado no es «accesible a cualquiera con el enlace». Requiere
-cuenta autorizada. En un repositorio privado personal, los colaboradores tienen
-acceso de escritura; para equipos con roles de lectura y administración separados,
-conviene la organización que TI determine. El enlace a Releases también es privado.
+Este repositorio es público y sus Releases también. No adjuntar allí material
+interno como inventario, mapas de distribución, documentos corporativos o datos
+de empleados. TI debe definir el canal y la visibilidad de la distribución binaria.
+Cambiar la visibilidad del repositorio no es parte de esta preparación local.
 
-## 4. Crear la primera Release de evaluación
-
-1. En la página del repositorio: **Releases → Draft a new release**.
-2. Tag: `v1.14.1` si no existe. Target: el commit de entrega en `main`.
-3. Título: `SLMS 1.14.1 — Evaluación de RH, Recepción y TI`.
-4. Copiar el texto de [RELEASE_1.14.1.md](RELEASE_1.14.1.md).
-5. Adjuntar desde la carpeta local de entrega preparada:
-   - `Samtec-Lockers-Windows.zip`.
-   - `Samtec-Lockers-Codigo.zip` (código del commit documentado).
-   - `SLMS_Instruccion_de_trabajo.docx`.
-   - `SLMS_Capacitacion_RH_Recepcion.pptx`.
-   - `SLMS_Inventario_Inicial_2026-10-20.xlsx`.
-   - `SLMS_Contornos_2026-10-20.json`.
-   - `SLMS_Plantilla_Empleados.xlsx` y `SLMS_Plantilla_Empleados.csv`.
-   - `00_LEER_PRIMERO.txt`.
-   - `SHA256.json`.
-   - `PROCEDENCIA.txt`.
-6. Marcar **This is a pre-release** para identificar su etapa de evaluación.
-7. Comprobar los adjuntos y pulsar **Publish release**, o Save draft para revisarla.
-
-El binario sigue siendo 1.14.1: esta entrega añade documentación, archivos de carga inicial y una utilidad de
-restauración de contornos para TI, sin modificar el ejecutable.
-Las Releases permiten distribuir el programa sin añadir sus archivos generados
-al historial Git. No adjuntar la base local ni la carpeta completa de AppData.
-
-## 5. Qué va a cada lugar
+## Material por destino
 
 | Material | Destino |
 | --- | --- |
-| Código, pruebas, migraciones, recursos y guías Markdown | Repositorio |
-| EXE con _internal, dentro del ZIP | Release |
-| WI y presentación editables | Release; copia aprobada en SharePoint si corresponde |
-| Inventario inicial autorizado sin personas, contornos y plantillas vacías | Release privada; ver [Carga inicial](CARGA_INICIAL.md) |
-| Listas de empleados, fotografías, asignaciones y backups | Canal interno de datos definido por TI |
-| Contraseñas, claves, tokens y archivos connection.dat/session.dat | Gestor de secretos/perfil protegido; nunca GitHub |
+| Código, migraciones, pruebas, recursos de la aplicación y guías Markdown | Repositorio |
+| Plantilla CSV sin registros | Repositorio, carpeta templates |
+| ZIP compilado, WI, presentaciones, inventario y contornos | Canal interno de Samtec |
+| Empleados, asignaciones, fotografías, respaldos y secretos | Ubicación protegida definida por TI |
 
-`.gitignore` reduce inclusiones accidentales; no borra archivos ya versionados
-ni elimina secretos de commits antiguos. Revisar también el historial antes del
-primer envío. Los recursos corporativos del proyecto siguen siendo de acceso privado.
-No añadir automáticamente una licencia MIT/Apache u otra licencia de código abierto.
+No se ha añadido una licencia nueva ni se han publicado cambios automáticamente.
+La titularidad, los permisos y la aceptación operativa quedan a cargo de los responsables.
 
-## 6. Mantenimiento del repositorio
-
-- Crear una rama por cambio y usar Pull Requests con revisión de TI.
-- No modificar etiquetas de versiones entregadas; publicar una versión nueva.
-- Registrar errores y mejoras con las plantillas de Issues.
-- Configurar protección/revisión de `main` según las funciones del plan de GitHub.
-- Revisar quién conserva propiedad y acceso; transferir a la organización de TI
-  cuando se acuerde, conservando el historial y verificando el remoto de Desktop.
-- El sitio web GitHub aloja el código: no ejecuta el servidor PostgreSQL/SLMS.
-
-## Fuentes oficiales
-
-- [Publicar con GitHub Desktop](https://docs.github.com/en/desktop/overview/creating-your-first-repository-using-github-desktop)
-- [Invitar colaboradores](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/inviting-collaborators-to-a-personal-repository)
-- [Permisos de repositorios personales](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository)
-- [Crear Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
-- [Archivos de Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
+Referencia: [Confirmar y subir cambios con GitHub Desktop](https://docs.github.com/en/desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project-in-github-desktop).

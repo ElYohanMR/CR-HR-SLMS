@@ -1,5 +1,55 @@
 # Validación de la entrega
 
+## Preparación de GitHub y paquete 1.14.5 · 27 de octubre de 2026
+
+- Suite completa local: **207 pruebas aprobadas** con SQLite y Qt, en 325,25 s.
+- PostgreSQL 18 temporal: **21 pruebas aprobadas** de mantenimiento por cortes,
+  historial por fechas y sincronización, en 43,83 s. Clúster independiente de la
+  base operativa, detenido al terminar.
+- Revisión estática con Ruff y comprobación de diferencias Git sin errores.
+- Ejecutable compilado de nuevo desde el código 1.14.5 y comprobado en un perfil
+  temporal: interfaz, servicio, autenticación, cortes, evidencias JPEG, historial
+  por fechas de Costa Rica, baja atómica y aviso simulado sin duplicados.
+- No se probaron entregas reales de correo, integración Microsoft ni despliegue
+  en la red corporativa. La aceptación de TI y RH sigue pendiente.
+- Las suites emitieron una advertencia de deprecación del cliente HTTP de pruebas
+  de Starlette; no hubo pruebas fallidas. No se modificó la base operativa.
+
+## Versión 1.14.5 · 25 de octubre de 2026
+
+- Intervalo automático configurable entre 5 y 300 segundos en Opciones →
+  Sincronización, con 10 segundos por defecto. Aplicación inmediata, cancelación,
+  recuperación de valores inválidos y preferencias separadas por cuenta comprobadas.
+- Las tablas conservan sus celdas cuando los valores mostrados no cambian; se
+  mantienen selección, casillas y orden. El mapa conserva sus elementos cuando
+  no cambian geometría u ocupación y reutiliza la imagen ya decodificada.
+- Una única lectura de la cola local por actualización de la ventana, en lugar
+  de tres. El resumen de actividad solo formatea los doce eventos que muestra.
+- 63 pruebas aprobadas de preferencias, tablas, consulta del mapa, áreas de clic,
+  deshacer, cortes e historial por fechas. Revisión estática sin errores.
+- Medición local de la actualización visual sin cambios: mediana de 461,72 ms
+  antes y 81,32 ms después (cinco muestras por versión), con 1.416 casilleros,
+  118 bloques, 1.238 eventos y 234 solicitudes locales. Datos leídos en modo de
+  solo lectura. La medición no incluye la descarga del servidor ni garantiza
+  el mismo tiempo con cambios, otras máquinas o bajo distinta carga.
+
+## Versión 1.14.4 · 25 de octubre de 2026
+
+- Consulta de historial por fechas Desde/Hasta, incluyendo ambos días completos
+  en hora de Costa Rica. Paginación por fecha e identificador para no repetir ni
+  saltar registros al incorporarse eventos nuevos entre páginas.
+- El período consultado se conserva al sincronizar. Detalle y exportación usan
+  sus registros; el resumen mantiene la actividad reciente. Validación de fechas,
+  autenticación y conservación de la consulta anterior ante fallos de conexión.
+- Recuadro del bloque anclado a la esquina del mapa durante arrastre con la mano,
+  desplazamiento con barras, zoom, cambio de tamaño y ajuste de vista.
+- 31 pruebas aprobadas en SQLite de fechas, consulta del mapa, áreas de clic y
+  búsqueda. Las tres pruebas de fechas también aprobaron en PostgreSQL temporal.
+- Ejecutable comprobado en un perfil aislado: interfaz, autenticación, servicio,
+  filtro de fechas, cortes de candado, fotografías y avisos simulados.
+- Vista del historial revisada visualmente con datos ficticios. Sin cambios de
+  esquema ni escrituras de prueba en la base operativa.
+
 ## Preparación para TI · 20 de octubre de 2026
 
 - El ejecutable y el código funcional de SLMS permanecen en 1.14.1.

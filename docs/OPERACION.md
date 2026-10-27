@@ -1,5 +1,17 @@
 # Guía de operación
 
+## Frecuencia de actualización
+
+En **Acciones → Opciones → Sincronización**, elige cada cuántos segundos consultar
+los cambios del servidor, entre **5 y 300 segundos**. El valor inicial es de
+**10 segundos**. **Aplicar** cambia el intervalo de inmediato; se guarda por
+cuenta en este equipo. **Cancelar** descarta los cambios que no hayas aplicado.
+
+El intervalo controla la consulta automática. **Sincronizar ahora** sigue disponible
+y guardar una operación intenta enviarla de inmediato. Si una sincronización aún
+está en curso, la aplicación no inicia otra simultánea. Los cambios permanecen
+pendientes hasta que el servidor los confirme.
+
 ## Orden de numeración · 1.14.1
 
 En **Opciones → Bloques y filas** configura **Primer paso de numeración** y
@@ -68,6 +80,10 @@ la comunicación que recibió del supervisor; el programa no lee Teams ni correo
    se propone su casillero asignado, pero puedes cambiarlo si el incidente corresponde
    a otro. Escribe nombre del supervisor, medio de comunicación y motivo libre.
    Guarda y espera la confirmación del servidor. Estado: **Solicitada**.
+   Desde esa confirmación, el casillero queda en **Mantenimiento** mientras la
+   solicitud esté Solicitada o En proceso. Conserva su asignación y no admite
+   una nueva asignación. Una solicitud pendiente de sincronizar todavía no
+   ha aplicado este cambio en el servidor.
 2. Abre la solicitud y usa **Asignar encargado**. Escribe quién realizará el
    corte. Al confirmarse, pasa a **En proceso**. Cambiar de encargado exige motivo.
 3. Las fotografías son **opcionales**: puedes adjuntar la identidad frente al
@@ -83,6 +99,16 @@ se editan mientras está Solicitada. Empleado/casillero identifican el expedient
 si se eligieron incorrectamente, cancela y crea uno nuevo. En proceso puedes
 sustituir una fotografía indicando el motivo; las anteriores siguen consultables.
 Las solicitudes Finalizadas o Canceladas no se reabren ni se borran.
+
+Al finalizar o cancelar, se retira el mantenimiento temporal del corte. Se
+recupera la condición previa o la última condición física registrada durante
+el trámite: un daño conserva el mantenimiento y una devolución sin verificar
+deja el casillero pendiente de verificar. Cerrar el corte no libera la asignación
+del empleado ni confirma por sí solo que el casillero esté disponible.
+En la ficha del casillero, **Condición al cerrar el corte** permite registrar
+esa condición sin quitar el mantenimiento mientras la solicitud siga abierta.
+La actualización también aplica el mantenimiento a las solicitudes abiertas
+que ya estaban registradas y conserva el cambio en el historial.
 
 El historial distingue al empleado, supervisor y encargado del corte de la cuenta
 de Recepción/HR que registró cada cambio. Se conservan datos de identificación del
@@ -213,6 +239,22 @@ En Inventario y archivos de importación/exportación, **columna 1 significa la 
 Haz clic en cualquier encabezado de columna para ordenar sus filas. El primer clic ordena de menor a mayor o de A a Z (▲); otro clic invierte el orden (▼). Funciona en Empleados, Inventario, Solicitudes, Historial, Administración y las listas de consulta e importación.
 
 Los números, códigos y fechas se ordenan por su valor: 2 aparece antes de 10 y N2 antes de N10. Los ID conservan sus ceros iniciales. El orden y la selección se conservan al sincronizar o filtrar mientras el registro seleccionado siga visible. Al cerrar y volver a abrir el programa se recupera el orden inicial de cada lista.
+
+## Consultar cambios en el historial
+
+Para consultar un período, selecciona **Desde** y **Hasta** en los calendarios y
+pulsa **Cargar período**. Se incluyen ambos días completos en hora de Costa Rica.
+La consulta requiere conexión al servidor y carga hasta 1.000 registros por página;
+usa **Cargar más** mientras haya registros pendientes de consultar. La búsqueda
+de texto y la exportación se aplican a los registros cargados del período.
+**Ver recientes** vuelve al historial reciente. La sincronización no cambia el
+período consultado; pulsa **Cargar período** otra vez para actualizar sus resultados.
+
+En **Historial**, abre un registro con doble clic para comparar las columnas
+**Antes** y **Después**. Los campos modificados aparecen en negrita y con fondo
+destacado. Marca **Mostrar también los campos sin cambios** para consultar el
+registro completo. La misma comparación está disponible en el historial de cada
+solicitud de corte. Esta ventana es de consulta y no modifica los datos guardados.
 
 ## Cuentas
 

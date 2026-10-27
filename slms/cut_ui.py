@@ -50,7 +50,7 @@ class CutWorkflows:
         self.cut_search.textChanged.connect(self.refresh_cuts)
         self.cut_filter.currentIndexChanged.connect(self.refresh_cuts)
 
-    def refresh_cuts(self):
+    def refresh_cuts(self, *_, queue=None):
         from .window import local_date
         query, state = self.cut_search.text().strip().casefold(), self.cut_filter.currentData()
         rows = []
@@ -63,8 +63,9 @@ class CutWorkflows:
         self.fill(self.cut_table, rows)
         ready = self.data.get("features", {}).get("padlock_cuts", False)
         self.cut_create_button.setEnabled(ready and self.allowed("editor"))
-        pending = sum(q["command"]["action"].startswith("cut.") and q["status"] != "confirmada"
-                      for q in self.store.queue(self.session["actor"]["id"]))
+        if queue is None:
+            queue = self.store.queue(self.session["actor"]["id"])
+        pending = sum(q["command"]["action"].startswith("cut.") and q["status"] != "confirmada" for q in queue)
         self.cut_notice.setText(f"Cambios pendientes de confirmación: {pending}."
                                if ready else "Actualiza la conexión para utilizar este apartado.")
         self.cut_notice.setVisible(bool(pending) or not ready)
@@ -98,7 +99,7 @@ class CutWorkflows:
                    ("reason", "Motivo del corte", "text")]
         form = Form("Editar solicitud" if item else "Nueva solicitud de corte de candado", fields,
                     item or {"channel": "teams"}, self,
-                    description="Registra la comunicación recibida del supervisor. Después de guardarla y sincronizar, abre la solicitud para asignar al encargado.")
+                    description="Al confirmarse la solicitud, el casillero queda en mantenimiento hasta finalizar o cancelar el corte. La asignación del empleado se conserva.")
         if item is None:
             def choose_locker():
                 employee_id = form.widgets["employee_id"].currentData()
@@ -363,10 +364,10 @@ class CutDialog(QDialog):
         w.fill(table, [(e["id"], [local_date(e["at"]), ACTIONS.get(e["action"], e["action"]),
                                  (w.lookup("admins", e["actor_id"]) or {}).get("name", "—"), e["reason"]]) for e in events])
         def detail():
-            import json
+            from .audit_ui import show_audit_detail
             event = next((e for e in events if e["id"] == w.selected(table)), None)
             if event:
-                info(dialog, json.dumps({"Antes": event["before"], "Después": event["after"]}, ensure_ascii=False, indent=2))
+                show_audit_detail(dialog, event, ACTIONS.get(event["action"], event["action"]))
         table.cellDoubleClicked.connect(lambda *_: detail())
         w.button(layout, "Cerrar", dialog.accept)
         dialog.exec()

@@ -1,7 +1,8 @@
 # Carga inicial del inventario y plantilla de empleados
 
-La Release privada incluye la distribución creada por Yohan y extraída el
-20/10/2026: **118 bloques, 1.416 casilleros, dos edificios y un plano**.
+La entrega interna incluye la distribución creada por Yohan y extraída el
+20/10/2026: **118 bloques y 1.416 casilleros asociados a E1**. El plano contiene
+los contornos de E1 y E2. Instrucciones revisadas para SLMS 1.14.5 el 27/10/2026.
 Se conserva la numeración de cuatro dígitos, posición interna, coordenadas y
 rotación. No incluye empleados, cuentas de acceso, asignaciones, fotografías,
 solicitudes ni secretos. Los casilleros importados quedan pendientes de verificar.
@@ -81,7 +82,7 @@ debe ser válido si se completa. La guía de la hoja incluye límites de longitu
 3. En SLMS, usar **Empleados → Importar CSV** y revisar la vista previa.
 4. Confirmar y revisar las altas en **Solicitudes**: cada persona se confirma por separado.
 
-La versión 1.14.1 no importa empleados directamente desde XLSX. Se entrega también
+La versión 1.14.5 no importa empleados directamente desde XLSX. Se entrega también
 `SLMS_Plantilla_Empleados.csv` vacío si se prefiere trabajar directamente con CSV.
 Guardar el archivo solo con las filas completadas, sin filas vacías al final.
 Importar de 1 a 1.000 personas nuevas por archivo. Los IDs duplicados se rechazan,
@@ -95,6 +96,8 @@ de candado, notas del casillero ni preferencias de cuentas. Esos datos se verifi
 o configuran en la nueva instalación. El inventario inicial corresponde a la fecha
 de extracción; cambios posteriores deben exportarse de nuevo.
 
-El Excel de bloques, el JSON y las plantillas vacías pueden acompañar la Release
-**privada** de esta entrega. Una plantilla completada con empleados debe circular
-por el canal interno autorizado, no añadirse al repositorio ni a la Release.
+El Excel de bloques, los contornos y los documentos corporativos se distribuyen
+por el canal interno autorizado. Una Release de este repositorio público también
+es pública. La plantilla CSV vacía está disponible en
+[templates/SLMS_Plantilla_Empleados.csv](../templates/SLMS_Plantilla_Empleados.csv).
+Una plantilla completada con empleados no debe añadirse a GitHub.

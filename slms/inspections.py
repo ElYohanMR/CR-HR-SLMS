@@ -1,6 +1,7 @@
 """Physical observations never implicitly release a person's assignment."""
 
 from sqlalchemy import select
+from .locker_condition import set_physical_condition
 from .models import InspectionRound, InspectionEntry, Locker, Audit, now, record
 
 OUTCOMES = {
@@ -77,7 +78,7 @@ def apply_inspection(db, actor, command):
             if p["outcome"] in ("desconocido", "diferencia", "ausente"):
                 condition = "pendiente"
             if condition and not locker.deleted_at:
-                locker.condition = condition
+                set_physical_condition(locker, condition)
             # Every observation checks/increments the locker version, so an old offline
             # observation cannot silently replace a more recent physical inspection.
             locker.version += 1

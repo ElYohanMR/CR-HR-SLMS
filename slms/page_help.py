@@ -31,11 +31,15 @@ PAGE_HELP = {
         "Busca cambios por operación, persona, casillero o responsable.\n"
         "Abre un registro para consultar los valores anteriores y posteriores.\n"
         "Usa Cargar historial anterior para consultar más registros.\n"
+        "Selecciona Desde y Hasta y pulsa Cargar período para buscar por fechas.\n"
+        "Usa Cargar más si quedan registros y Ver recientes para quitar el período.\n"
         "Las fechas se muestran en hora de Costa Rica."
     ),
     "Solicitudes de corte de candado": (
         "Registra al empleado, supervisor, casillero y motivo del corte.\n"
         "Abre la solicitud para asignar al encargado y registrar el resultado.\n"
+        "Al confirmarse, el casillero queda en mantenimiento hasta finalizar\n"
+        "o cancelar. Se conserva su condición física para el cierre.\n"
         "Las fotografías son opcionales. Finalizar exige fecha del corte,\n"
         "resultado y confirmación de identidad. La asignación se conserva."
     ),

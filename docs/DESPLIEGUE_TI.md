@@ -1,6 +1,6 @@
 # Instalación del servidor, clientes y rutas
 
-Base revisada: 1.14.1. Fecha de esta guía: 20 de octubre de 2026.
+Base revisada: 1.14.5. Fecha de esta guía: 27 de octubre de 2026.
 Los nombres de equipos, carpetas y dominio que siguen son ejemplos. TI debe
 sustituirlos y registrar los valores reales en su inventario de infraestructura.
 
@@ -9,7 +9,7 @@ sustituirlos y registrar los valores reales en su inventario de infraestructura.
 | Dato | Ejemplo / decisión |
 | --- | --- |
 | Equipo del servicio | Windows administrado por TI |
-| Carpeta de distribución | `C:\Apps\SLMS\1.14.1\SamtecLockers` |
+| Carpeta de distribución | `C:\Apps\SLMS\1.14.5\SamtecLockers` |
 | Perfil Windows del servicio | Cuenta dedicada definida por TI |
 | Base de piloto | `samtec_lockers_piloto` |
 | Cuenta PostgreSQL | `slms_piloto` con propiedad del esquema para migraciones |
@@ -50,7 +50,7 @@ esa instancia concreta para no abrir dos servicios sobre el mismo puerto.
 Comando para el supervisor de TI (ruta de ejemplo):
 
 ```powershell
-& 'C:\Apps\SLMS\1.14.1\SamtecLockers\SamtecLockers.exe' --server
+& 'C:\Apps\SLMS\1.14.5\SamtecLockers\SamtecLockers.exe' --server
 ```
 
 Puede supervisarse con un mecanismo de ejecución de procesos aprobado por TI,
@@ -146,7 +146,7 @@ El inventario mapeado pertenece a la base local del autor. Acordar una de estas 
   corresponda: la hoja de inventario no sustituye todo el respaldo.
 
 Para iniciar sin empleados, esta entrega ya incluye Excel de inventario y contornos
-autorizados para la Release privada. Seguir [Carga inicial](CARGA_INICIAL.md):
+autorizados para el canal interno de Samtec. Seguir [Carga inicial](CARGA_INICIAL.md):
 restaurar primero los contornos y después importar el Excel. No copiar el perfil
 local ni las credenciales del autor.
 

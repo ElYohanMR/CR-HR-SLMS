@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import httpx
-from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtCore import Qt, QTimer, QSize, QDate
 from PySide6.QtGui import QIcon
 from .config import asset
 from PySide6.QtWidgets import (
@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QToolButton,
     QToolTip,
+    QDateEdit,
 )
 from .forms import Form, info, confirm
 from .local import LocalStore
@@ -63,6 +64,7 @@ ACTIONS = {
     "cut.photo": "Fotografía de evidencia",
     "cut.complete": "Finalizar corte de candado",
     "cut.cancel": "Cancelar solicitud de corte",
+    "locker.cut_maintenance": "Mantenimiento por corte de candado",
     "inventory.restore_many": "Restaurar elementos marcados",
     "inventory.purge": "Eliminar definitivamente inventario",
     "block.purge": "Bloque eliminado definitivamente",
@@ -135,6 +137,8 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             )
         }
         self.worker = None
+        self.loaded_audit = None
+        self.audit_range = None
         self.connection_state = "inicial"
         self.setWindowTitle("SLMS - Samtec Locker Management System - Gestion de casilleros")
         self.resize(1450, 900)
@@ -197,7 +201,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.apply_preferences()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.sync)
-        self.timer.start(10000)
+        self.timer.start(self.preferences["sync_seconds"] * 1000)
         QTimer.singleShot(150, self.sync)
 
     def page(self, title, subtitle):
@@ -1009,6 +1013,8 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         )
 
     def locker_state(self, locker):
+        if locker["condition"] == "mantenimiento":
+            return "mantenimiento"
         return "ocupado" if self.assignment_for(locker_id=locker["id"]) else locker["condition"]
 
     def locker_code(self, locker):
@@ -1253,13 +1259,15 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             return
         assignment = self.assignment_for(locker_id=id)
         person = self.lookup("employees", assignment["employee_id"]) if assignment else None
+        cut_hold = locker.get("condition_after_cut") is not None
+        values = dict(locker, condition=locker["condition_after_cut"]) if cut_hold else locker
         form = Form(
             self.locker_code(locker),
             [
                 ("number", "Número físico", "line"),
                 (
                     "condition",
-                    "Condición",
+                    "Condición al cerrar el corte" if cut_hold else "Condición",
                     [
                         ("Verificado y utilizable", "utilizable"),
                         ("Pendiente de verificar", "pendiente"),
@@ -1271,9 +1279,9 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                  ([("Sin registrar", None)] if locker.get("has_padlock") is None else []) + [("Sí", True), ("No", False)]),
                 ("notes", "Notas del casillero", "text"),
             ],
-            locker,
+            values,
             self,
-            description=(
+            description=("En mantenimiento por solicitud de corte abierta. " if cut_hold else "") + (
                 "Asignado a " + full_name(person) + " · " + person["employee_number"]
                 if person
                 else "Sin asignación vigente. Estado: " + STATES[locker["condition"]]
@@ -1428,13 +1436,30 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.audit_search = QLineEdit()
         self.audit_search.setPlaceholderText("Buscar operación, persona, casillero o responsable…")
         row.addWidget(self.audit_search, 1)
-        self.button(row, "Cargar historial anterior", self.load_history)
+        self.history_more = self.button(row, "Cargar historial anterior", self.load_history)
         self.button(row, "Correos", self.notifications)
         self.actions_button(row, [
             ("Exportar historial cargado", lambda: self.export("audit"), None),
             ("Correos y borradores", self.notifications, None),
         ])
         layout.addLayout(row)
+        dates = QHBoxLayout()
+        today = datetime.now(ZoneInfo("America/Costa_Rica")).date()
+        self.audit_from = QDateEdit(QDate(today.year, today.month, 1))
+        self.audit_to = QDateEdit(QDate(today.year, today.month, today.day))
+        for label, field in (("Desde", self.audit_from), ("Hasta", self.audit_to)):
+            dates.addWidget(QLabel(label))
+            field.setAccessibleName(label)
+            field.setCalendarPopup(True)
+            field.setDisplayFormat("dd/MM/yyyy")
+            dates.addWidget(field)
+        self.button(dates, "Cargar período", self.load_history_range)
+        self.button(dates, "Ver recientes", self.reset_history_range)
+        dates.addStretch()
+        layout.addLayout(dates)
+        self.history_status = QLabel("Historial reciente · Fechas en hora de Costa Rica")
+        self.history_status.setWordWrap(True)
+        layout.addWidget(self.history_status)
         self.audit_table = self.table(layout, ["Fecha / hora", "Operación", "Responsable", "Registro", "Motivo"])
         self.audit_search.textChanged.connect(self.refresh_history)
         self.audit_table.cellDoubleClicked.connect(self.audit_detail)
@@ -1443,32 +1468,71 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         self.show_audit(self.selected(self.audit_table))
 
     def show_audit(self, id):
-        item = self.lookup("audit", id)
+        item = next((x for x in self.history_events() if x["id"] == id), None) or self.lookup("audit", id)
         if item:
-            info(
-                self,
-                "Antes:\n"
-                + json.dumps(item["before"], ensure_ascii=False, indent=2)
-                + "\n\nDespués:\n"
-                + json.dumps(item["after"], ensure_ascii=False, indent=2),
-            )
+            from .audit_ui import show_audit_detail
+            show_audit_detail(self, item, ACTIONS.get(item["action"], item["action"]))
+
+    def history_events(self):
+        if self.loaded_audit is None:
+            return self.data["audit"]
+        if self.audit_range is None:
+            events = {x["id"]: x for x in self.loaded_audit + self.data["audit"]}
+            # Stable ordering for paging through entries with the same timestamp.
+            self.loaded_audit = sorted(sorted(events.values(), key=lambda x: x["id"]), key=lambda x: x["at"], reverse=True)
+        return self.loaded_audit
+
+    def reset_history_range(self):
+        self.loaded_audit = self.audit_range = None
+        self.history_more.setText("Cargar historial anterior")
+        self.history_more.setEnabled(True)
+        self.history_status.setText("Historial reciente · Fechas en hora de Costa Rica")
+        self.refresh_history()
+
+    def load_history_range(self):
+        if self.audit_from.date() > self.audit_to.date():
+            info(self, "La fecha Desde no puede ser posterior a Hasta.")
+            return
+        if not self.data.get("features", {}).get("audit_date_range"):
+            info(self, "Actualiza el servidor de SLMS para consultar el historial por fechas.")
+            return
+        self.fetch_history({"date_from": self.audit_from.date().toString("yyyy-MM-dd"),
+                            "date_to": self.audit_to.date().toString("yyyy-MM-dd")}, replace=True)
 
     def load_history(self):
+        self.fetch_history(self.audit_range)
+
+    def fetch_history(self, period, replace=False):
+        events = [] if replace else self.history_events()
+        params = dict(period or {})
+        if events:
+            last = sorted(sorted(events, key=lambda x: x["id"]), key=lambda x: x["at"], reverse=True)[-1]
+            if self.data.get("features", {}).get("audit_date_range"):
+                params.update(before_at=last["at"], before_id=last["id"])
+            else:
+                params["offset"] = len(events)
         try:
             r = httpx.get(
                 self.config["url"] + "/audit",
-                params={"offset": len(self.data["audit"])},
+                params=params,
                 headers={"Authorization": "Bearer " + self.session["token"]},
                 timeout=8,
                 trust_env=False,
             )
             r.raise_for_status()
-            self.data["audit"].extend(r.json())
+            page = r.json()
+            self.loaded_audit = list({x["id"]: x for x in events + page}.values())
+            self.audit_range = period
+            self.history_more.setText("Cargar más" if period else "Cargar historial anterior")
+            self.history_more.setEnabled(len(page) == 1000)
+            label = (f"Del {QDate.fromString(period['date_from'], 'yyyy-MM-dd').toString('dd/MM/yyyy')} "
+                     f"al {QDate.fromString(period['date_to'], 'yyyy-MM-dd').toString('dd/MM/yyyy')}"
+                     if period else "Historial cargado")
+            suffix = f" · Hay más registros: pulsa {self.history_more.text()}." if len(page) == 1000 else " · Consulta completa."
+            self.history_status.setText(f"{label} · {len(self.loaded_audit)} registros · Hora de Costa Rica{suffix}")
             self.refresh_history()
-            if not r.json():
-                info(self, "No hay más eventos anteriores.")
-        except httpx.HTTPError:
-            info(self, "No se pudo cargar el historial anterior. Verifica conexión y sesión.")
+        except (httpx.HTTPError, ValueError):
+            info(self, "No se pudo cargar el historial. Verifica conexión y sesión.")
 
     def notifications(self):
         dialog = QDialog(self)
@@ -1703,7 +1767,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         filename, _ = QFileDialog.getSaveFileName(self, "Exportar", f"samtec-{kind}.csv", "CSV (*.csv)")
         if not filename:
             return
-        rows = copy.deepcopy(self.data[kind])
+        rows = copy.deepcopy(self.history_events() if kind == "audit" else self.data[kind])
         if not rows:
             info(self, "No hay registros para exportar.")
             return
@@ -1774,8 +1838,9 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
                 rows.append((locker["id"], values))
         self.fill(self.inventory, rows)
 
-    def refresh_queue(self):
-        queue = self.store.queue(self.session["actor"]["id"])
+    def refresh_queue(self, queue=None):
+        if queue is None:
+            queue = self.store.queue(self.session["actor"]["id"])
         self.fill(
             self.queue_table,
             [
@@ -1793,9 +1858,9 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             ],
         )
 
-    def audit_rows(self):
+    def audit_rows(self, events=None):
         rows = []
-        for a in self.data["audit"]:
+        for a in self.data["audit"] if events is None else events:
             admin = self.lookup("admins", a["actor_id"])
             target = a["after"]
             label = (
@@ -1821,9 +1886,9 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
 
     def refresh_history(self):
         query = self.audit_search.text().casefold()
-        rows = self.audit_rows()
+        rows = self.audit_rows(self.history_events())
         self.fill(self.audit_table, [(id, v) for id, v in rows if query in " ".join(v).casefold()])
-        self.fill(self.recent, [(id, v[:3]) for id, v in rows[:12]])
+        self.fill(self.recent, [(id, v[:3]) for id, v in self.audit_rows(self.data["audit"][:12])])
 
     def refresh(self):
         self.indexes = {
@@ -1844,20 +1909,21 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
         labels = [
             f"{len(self.data['lockers'])}\nCasilleros",
             f"{counts['utilizable']}\nDisponibles",
-            f"{counts['ocupado']}\nAsignados",
+            f"{sum(locker['id'] in self.current_by_locker for locker in self.data['lockers'])}\nAsignados",
             f"{counts['pendiente']}\nPor verificar",
         ]
         for widget, label in zip(self.metrics, labels):
             widget.setText(label)
-        pending = sum(q["status"] != "confirmada" for q in self.store.queue(self.session["actor"]["id"]))
+        queue = self.store.queue(self.session["actor"]["id"])
+        pending = sum(q["status"] != "confirmada" for q in queue)
         self.summary.setText(
             f"{len(self.data['employees'])} empleados · {len(self.data['blocks'])} bloques · {counts['mantenimiento']} casilleros en mantenimiento · Cambios pendientes: {pending}"
         )
         self.refresh_employees()
         self.refresh_inventory()
-        self.refresh_queue()
+        self.refresh_queue(queue)
         self.refresh_history()
-        self.refresh_cuts()
+        self.refresh_cuts(queue=queue)
         self.fill(
             self.admin_table,
             [
@@ -1883,7 +1949,7 @@ class Window(CutWorkflows, Preferences, InventorySelection, Workflows, ContextMe
             if idx >= 0:
                 self.plan_combo.setCurrentIndex(idx)
             self.plan_combo.blockSignals(False)
-            self.map.render(self.data, self.plan_combo.currentData())
+            self.map.refresh_snapshot(self.data, self.plan_combo.currentData())
             if self.map.transform().m11() == 1:
                 self.map.fit()
 

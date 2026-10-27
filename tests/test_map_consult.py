@@ -5,6 +5,74 @@ from slms.window import Window
 from slms.local import LocalStore
 
 
+def test_snapshot_refresh_reuses_map_but_updates_occupancy_and_geometry(qtbot, system):
+    _, client, _ = system
+    data = client.get("/snapshot").json()
+    data["assignments"] = []
+    view = MapView()
+    qtbot.addWidget(view)
+    view.render(data, "campus")
+    original_item = view.block_items[0]
+    pixmap_key = view.background_item.pixmap().cacheKey()
+    data["at"] = "2026-10-25T12:00:00+00:00"
+    data["lockers"][0]["notes"] = "Una nota no cambia la disponibilidad"
+    view.refresh_snapshot(data, "campus")
+    assert view.block_items[0] is original_item
+    locker = data["lockers"][0]
+    data["assignments"] = [{"locker_id": locker["id"], "ended_at": None}]
+    view.refresh_snapshot(data, "campus")
+    assert view.block_items[0] is not original_item
+    assert view.details[locker["block_id"]][2] == 1
+    assert view.background_item.pixmap().cacheKey() == pixmap_key
+    data["blocks"][0]["x"] += 10
+    view.refresh_snapshot(data, "campus")
+    assert view.block_items[0].pos().x() == data["blocks"][0]["x"]
+
+
+def test_block_card_stays_in_corner_during_pan_zoom_and_resize(qtbot, system):
+    from PySide6.QtCore import QPoint, QPointF, QEvent
+    from PySide6.QtGui import QMouseEvent, QWheelEvent
+    from PySide6.QtWidgets import QApplication
+    _, client, _ = system
+    data = client.get("/snapshot").json()
+    view = MapView()
+    qtbot.addWidget(view)
+    view.resize(1000, 650)
+    view.show()
+    view.render(data, "campus")
+    view.scale(4, 4)
+    view.centerOn(500, 300)
+    view.show_card(data["blocks"][0]["id"])
+
+    def anchored():
+        qtbot.wait(10)
+        rect = view.viewport().geometry()
+        assert view.card.pos() == QPoint(rect.x() + max(4, rect.width() - view.card.width() - 12), rect.y() + 12)
+        assert view.card.isVisible()
+
+    anchored()
+    view.horizontalScrollBar().setValue(view.horizontalScrollBar().value() + 100)
+    view.verticalScrollBar().setValue(view.verticalScrollBar().value() + 70)
+    anchored()
+    before = (view.horizontalScrollBar().value(), view.verticalScrollBar().value())
+    start, end = QPoint(150, 450), QPoint(220, 500)
+    qtbot.mousePress(view.viewport(), Qt.MouseButton.LeftButton, pos=start)
+    QApplication.sendEvent(view.viewport(), QMouseEvent(QEvent.Type.MouseMove, QPointF(end),
+        QPointF(view.viewport().mapToGlobal(end)), Qt.MouseButton.NoButton, Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier))
+    qtbot.mouseRelease(view.viewport(), Qt.MouseButton.LeftButton, pos=end)
+    assert before != (view.horizontalScrollBar().value(), view.verticalScrollBar().value())
+    anchored()
+    QApplication.sendEvent(view.viewport(), QWheelEvent(QPointF(end), QPointF(view.viewport().mapToGlobal(end)),
+        QPoint(), QPoint(0, 120), Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase, False))
+    anchored()
+    view.resize(850, 580)
+    anchored()
+    view.fit()
+    anchored()
+
+
 def test_map_colors():
     lockers = [{"id": str(i), "condition": "utilizable"} for i in range(12)]
     assert block_status(lockers, set())[2] == "#187842"

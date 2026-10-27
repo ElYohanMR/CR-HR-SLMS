@@ -209,6 +209,9 @@ class MapView(QGraphicsView):
         self.highlighted_block = None
         self.satellite = True
         self.background_item = None
+        self._rendered_snapshot = None
+        self._background_data = None
+        self._background_pixmap = QPixmap()
         self.moves = QUndoStack(self)
         self.moves.setUndoLimit(100)
         self.undo_action = self.moves.createUndoAction(self, "Deshacer")
@@ -228,7 +231,9 @@ class MapView(QGraphicsView):
         self.pulse.setLoopCount(-1)
         self.pulse.setEasingCurve(QEasingCurve.Type.InOutSine)
         self.pulse.valueChanged.connect(self.paint_highlight)
-        self.card = QFrame(self.viewport())
+        # A child of the viewport is moved by QWidget.scroll during hand panning.
+        # Keep this overlay outside the scrolling viewport instead.
+        self.card = QFrame(self)
         self.card.setObjectName("blockCard")
         self.card.setStyleSheet("#blockCard { background: white; border: 2px solid #555; border-radius: 5px; }")
         self.card.setFixedWidth(300)
@@ -320,11 +325,28 @@ class MapView(QGraphicsView):
         )
         self.card.setStyleSheet(f"#blockCard {{ background: white; border: 2px solid {color}; border-radius: 5px; }}")
         self.card.adjustSize()
-        self.card.move(max(4, self.viewport().width() - self.card.width() - 12), 12)
+        self.position_card()
         self.card.show()
         self.card.raise_()
 
+    def snapshot_key(self, snapshot, plan_id):
+        plan = next((p for p in snapshot.get("plans", []) if p["id"] == plan_id), None)
+        blocks = sorted((b for b in snapshot.get("blocks", []) if b["plan_id"] == plan_id), key=lambda b: b["id"])
+        block_ids = {b["id"] for b in blocks}
+        lockers = sorted((x["id"], x["block_id"], x["condition"]) for x in snapshot.get("lockers", [])
+                         if x["block_id"] in block_ids)
+        locker_ids = {x[0] for x in lockers}
+        occupied = frozenset(a["locker_id"] for a in snapshot.get("assignments", [])
+                             if a["ended_at"] is None and a["locker_id"] in locker_ids)
+        buildings = sorted((b["id"], b["code"]) for b in snapshot.get("buildings", []))
+        return plan_id, plan, blocks, lockers, occupied, buildings
+
+    def refresh_snapshot(self, snapshot, plan_id):
+        if self.snapshot_key(snapshot, plan_id) != self._rendered_snapshot:
+            self.render(snapshot, plan_id)
+
     def render(self, snapshot, plan_id):
+        self._rendered_snapshot = copy.deepcopy(self.snapshot_key(snapshot, plan_id))
         highlighted = self.highlighted_block if self.plan and self.plan["id"] == plan_id else None
         self.stop_highlight()
         selected = self.selected_block if self.plan and self.plan["id"] == plan_id else None
@@ -339,8 +361,11 @@ class MapView(QGraphicsView):
         if not self.plan:
             return
         if self.plan.get("background"):
-            pix = QPixmap()
-            pix.loadFromData(base64.b64decode(self.plan["background"]))
+            if self.plan["background"] != self._background_data:
+                self._background_data = self.plan["background"]
+                self._background_pixmap = QPixmap()
+                self._background_pixmap.loadFromData(base64.b64decode(self._background_data))
+            pix = self._background_pixmap
             if not pix.isNull():
                 self.map_height = 1000 * pix.height() / pix.width()
                 item = self.scene().addPixmap(pix)
@@ -436,6 +461,15 @@ class MapView(QGraphicsView):
     def fit(self):
         self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
 
+    def position_card(self):
+        if hasattr(self, "card"):
+            viewport = self.viewport().geometry()
+            self.card.move(viewport.x() + max(4, viewport.width() - self.card.width() - 12), viewport.y() + 12)
+
+    def scrollContentsBy(self, dx, dy):
+        super().scrollContentsBy(dx, dy)
+        self.position_card()
+
     def wheelEvent(self, event):
         factor = 1.2 if event.angleDelta().y() > 0 else 1 / 1.2
         if 0.1 < self.transform().m11() * factor < 40:
@@ -444,5 +478,4 @@ class MapView(QGraphicsView):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if self.selected_block:
-            self.show_card(self.selected_block)
+        self.position_card()

@@ -9,6 +9,7 @@ import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import httpx
 from slms.config import save_private
 
@@ -81,6 +82,9 @@ try:
         result = client.post("/commands", json=cut).json()
         assert result["status"] == "confirmada", result
         cut_id = result["target_id"]
+        held = next(item for item in client.get("/snapshot").json()["lockers"] if item["id"] == locker["id"])
+        assert held["condition"] == "mantenimiento"
+        assert held["condition_after_cut"] == locker["condition"]
         def cut_step(action, payload):
             item = next(c for c in client.get("/snapshot").json()["cut_requests"] if c["id"] == cut_id)
             command = request(action, dict(payload, id=cut_id), {"cut_request:" + cut_id: item["version"]})
@@ -100,6 +104,11 @@ try:
         assert client.get("/cuts/" + cut_id + "/history").status_code == 200
         cut_step("cut.complete", {"identity_verified": True,
             "performed_at": datetime.now(timezone.utc).isoformat(), "result": "Corte con una fotografía opcional."})
+        restored = next(item for item in client.get("/snapshot").json()["lockers"] if item["id"] == locker["id"])
+        assert restored["condition"] == locker["condition"]
+        assert restored["condition_after_cut"] is None
+        assert restored["version"] == locker["version"] + 2
+        locker = restored
         assert snapshot["features"]["locker_padlock"]
         update = request("locker.update", {"id": locker["id"], "number": locker["number"],
             "condition": locker["condition"], "notes": locker["notes"], "has_padlock": True},
@@ -126,7 +135,14 @@ try:
         notices = [n for n in snapshot["notifications"] if n["command_id"] == departure["id"]]
         assert len(notices) == 1 and notices[0]["recipient"] == "hr@example.com"
         assert notices[0]["status"] == "simulado"
+        assert snapshot["features"]["audit_date_range"]
+        local_day = datetime.fromisoformat(snapshot["at"]).astimezone(ZoneInfo("America/Costa_Rica")).date().isoformat()
+        dated = client.get("/audit", params={"date_from": local_day, "date_to": local_day})
+        assert dated.status_code == 200
+        assert any(event["command_id"] == departure["id"] for event in dated.json())
+        assert client.get("/audit", params={"date_from": "2000-01-01", "date_to": "2000-01-01"}).json() == []
         print("PASS: executable interface, server, authentication, padlock cuts, original JPEG evidence, case history, atomic departure and unique simulated HR notice.")
+        print("PASS: packaged history date filter with Costa Rica calendar dates.")
         print("Preview profile: " + str(profile))
 finally:
     process.terminate()

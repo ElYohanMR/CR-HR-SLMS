@@ -23,6 +23,7 @@ from .models import (
     record,
 )
 from .notifications import notification
+from .locker_condition import physical_condition, set_physical_condition
 
 
 class RuleError(Exception):
@@ -156,7 +157,7 @@ def mutate(db, actor, command):
             old_locker = record(locker)
             current.ended_at, current.ended_by, current.end_reason = at, actor.id, reason
             current.version += 1
-            locker.condition = "utilizable" if verified else "pendiente"
+            set_physical_condition(locker, "utilizable" if verified else "pendiente")
             locker.version += 1
             db.add(
                 Audit(
@@ -300,7 +301,7 @@ def mutate(db, actor, command):
             old = record(locker)
             locker.deleted_at = stamp
             if restoring:
-                locker.condition = "pendiente"
+                set_physical_condition(locker, "pendiente")
             locker.version += 1
             db.add(
                 Audit(
@@ -315,7 +316,7 @@ def mutate(db, actor, command):
             )
         target.deleted_at = stamp
         if restoring and not is_block:
-            target.condition = "pendiente"
+            set_physical_condition(target, "pendiente")
         if not is_block:
             # Invalidate a block removal prepared before this membership change.
             get(db, Block, target.block_id).version += 1
@@ -342,7 +343,7 @@ def mutate(db, actor, command):
         for locker in pending:
             check_version(locker, versions, "locker")
             old = record(locker)
-            locker.condition = "utilizable"
+            set_physical_condition(locker, "utilizable")
             locker.version += 1
             db.add(
                 Audit(
@@ -359,13 +360,15 @@ def mutate(db, actor, command):
         target = get(db, Locker, p.get("id"))
         check_version(target, versions, "locker")
         before = record(target)
-        condition = p.get("condition", target.condition)
+        condition = p.get("condition", physical_condition(target))
         if condition not in ("pendiente", "utilizable", "mantenimiento", "retirado"):
             raise RuleError("Condición inválida.")
-        if condition != "utilizable" and active_assignment(db, locker_id=target.id):
+        if (condition != physical_condition(target) and condition != "utilizable"
+                and (target.condition_after_cut is None or condition == "retirado")
+                and active_assignment(db, locker_id=target.id)):
             raise RuleError("Libera el casillero antes de cambiar su condición.")
         target.number = required(p, "number", 40)
-        target.condition = condition
+        set_physical_condition(target, condition)
         target.notes = str(p.get("notes", ""))[:10000]
         if "has_padlock" in p:
             value = p["has_padlock"]
@@ -401,7 +404,7 @@ def mutate(db, actor, command):
             current.version += 1
             if action == "assignment.release":
                 before["locker"] = record(old_locker)
-                old_locker.condition = "utilizable" if p.get("locker_verified", False) else "pendiente"
+                set_physical_condition(old_locker, "utilizable" if p.get("locker_verified", False) else "pendiente")
             old_locker.version += 1
             db.flush()
         if action == "assignment.release":

@@ -1,14 +1,14 @@
 # Revisión y aceptación de entrega
 
-Versión de referencia: 1.14.1. Documento preparado el 20 de octubre de 2026.
+Versión de referencia: 1.14.5. Documento revisado el 27 de octubre de 2026.
 Marcar únicamente lo que haya sido verificado por el responsable correspondiente.
 
 ## Material disponible
 
-- [ ] Repositorio privado accesible a los revisores invitados.
-- [ ] Release con ejecutable, código de la etiqueta, WI, presentación y SHA-256.
+- [ ] Repositorio accesible a los revisores y visibilidad acordada con TI.
+- [ ] Entrega interna con ejecutable, referencia del código, WI, presentaciones y SHA-256.
 - [ ] Guías de despliegue, operación, Microsoft y propuestas futuras revisadas.
-- [ ] Inventario inicial, contornos y plantillas vacías incluidos en la Release privada.
+- [ ] Inventario inicial, contornos y plantillas vacías incluidos en la entrega interna.
 - [ ] Carga en servidor nuevo: 118 bloques, 1.416 casilleros, sin empleados ni asignaciones.
 - [ ] Datos personales y respaldos transferidos separadamente, cuando se autorice su carga.
 
@@ -38,6 +38,9 @@ Marcar únicamente lo que haya sido verificado por el responsable correspondient
 - [ ] Importación/exportación, ceros iniciales y numeración física comprobados.
 - [ ] Devolución y baja dejan la condición física correcta.
 - [ ] Corte sin fotografías se finaliza con los datos y confirmaciones requeridos.
+- [ ] Corte abierto mantiene el casillero en mantenimiento; al cerrar recupera la condición prevista sin liberar la asignación.
+- [ ] Historial por fechas incluye ambos días y destaca los campos modificados.
+- [ ] Intervalos de sincronización y actualización de varios puestos comprobados.
 - [ ] Correo manual editado y enviado desde el cliente de correo; no simular entrega.
 - [ ] Restauración real en base separada y verificación de inventario y evidencias.
 - [ ] RH/Recepción revisaron el WI y la capacitación y registraron observaciones.

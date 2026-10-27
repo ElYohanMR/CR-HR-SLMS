@@ -1,6 +1,6 @@
 # Propuestas de evolución
 
-Fecha: 20 de octubre de 2026. Base: SLMS 1.14.1.
+Revisión: 27 de octubre de 2026. Base: SLMS 1.14.5.
 Todas las iniciativas de este documento son **propuestas**, salvo lo descrito
 expresamente como comportamiento actual. No constituyen funciones entregadas,
 compromisos de fechas ni decisiones de arquitectura aprobadas.

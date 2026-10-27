@@ -48,3 +48,10 @@ release/
 release-*/
 data/
 datos-operativos/
+
+# Documentos corporativos y distribución de inventario: canal interno
+SLMS_*.docx
+SLMS_*.pptx
+SLMS_Inventario_*.xlsx
+SLMS_Contornos_*.json
+SLMS_Plantilla_Empleados.xlsx

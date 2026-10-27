@@ -3,8 +3,8 @@
 Gestión de casilleros para Recursos Humanos y Recepción. Aplicación de escritorio
 Windows con servicio central, inventario visual y trazabilidad de operaciones.
 
-**Versión de la aplicación: 1.14.1. Estado: evaluación y piloto controlado.**
-Documentación de entrega actualizada el 20 de octubre de 2026. Este repositorio
+**Versión de la aplicación: 1.14.5. Estado: evaluación y piloto controlado.**
+Documentación de entrega actualizada el 27 de octubre de 2026. Este repositorio
 no acredita aprobación corporativa ni despliegue en producción.
 
 ## Empezar aquí
@@ -16,15 +16,18 @@ no acredita aprobación corporativa ni despliegue en producción.
 | Aprender los procedimientos de operación | [Guía de uso](docs/OPERACION.md) |
 | Evaluar lo pendiente de Microsoft | [Microsoft y correo](docs/MICROSOFT.md) |
 | Revisar Android, iOS y próximas mejoras | [Propuestas de evolución](docs/ROADMAP.md) |
-| Publicar el repositorio privado y los descargables | [Guía GitHub](docs/GITHUB_ENTREGA.md) |
+| Actualizar el repositorio con GitHub Desktop | [Guía GitHub](docs/GITHUB_ENTREGA.md) |
 | Cargar los 118 bloques y preparar empleados | [Carga inicial](docs/CARGA_INICIAL.md) |
 | Coordinar aceptación y responsables | [Lista de entrega](docs/ENTREGA_TI.md) |
 | Consultar pruebas anteriores y su alcance | [Registro de validación](docs/VALIDACION.md) |
 
-Los ZIP del programa, el WI y la presentación se publicarán como archivos de una
-**Release privada**. Si todavía no aparece una Release, esos archivos aún no han
-sido publicados. El ZIP automático «Source code» de GitHub contiene código, no
-el ejecutable de Windows. El WI y la presentación requieren revisión documental.
+El ZIP del programa, los WI, las presentaciones y la carga inicial se entregan
+por el canal interno de Samtec. Este repositorio es público: sus Releases también
+lo son. La documentación interna no se adjunta automáticamente a GitHub.
+El ZIP «Source code» de GitHub contiene código, no el ejecutable de Windows.
+El WI y la capacitación requieren revisión documental.
+
+Cambios de esta entrega: [Notas de SLMS 1.14.5](docs/RELEASE_1.14.5.md).
 
 ## Qué incluye esta versión
 
@@ -36,12 +39,16 @@ el ejecutable de Windows. El WI y la presentación requieren revisión documenta
 - Empleados, asignaciones, traslados, devoluciones, bajas y reingresos.
 - Revisiones físicas y seguimiento de disponibilidad: un casillero sin empleado
   registrado no se considera libre hasta verificarlo.
-- Cortes de candado con responsable, estados y fotografías opcionales.
-- Historial, permisos, búsquedas, ordenación y acciones sobre filas marcadas.
+- Cortes de candado con responsable, estados y fotografías opcionales. El casillero
+  queda en mantenimiento mientras el corte esté abierto y recupera la condición
+  prevista al finalizar o cancelar, conservando su asignación.
+- Historial consultable por fechas y detalle que resalta los campos modificados.
+- Permisos, búsquedas, ordenación y acciones sobre filas marcadas.
 - Importación de empleados CSV e intercambio de inventario Excel/CSV.
 - Solicitudes locales persistentes, reintentos y detección de conflictos.
 - Borradores de correo editables; apertura en Outlook u otro cliente predeterminado.
-- Ajustes por cuenta/equipo y respaldos manuales de la base central.
+- Ajustes por cuenta/equipo, sincronización configurable entre 5 y 300 segundos
+  y respaldos manuales de la base central.
 
 **Límites actuales:** no hay aplicaciones Android/iOS, inicio Microsoft, envío
 automático de correo ni integración con el padrón de HR. Los controles Microsoft
@@ -90,9 +97,9 @@ La demostración de cada equipo tiene su propia base; no comparte datos con otro
 .\scripts\build.ps1
 ```
 
-No se han repetido las pruebas funcionales por esta actualización exclusivamente
-documental. Consultar el registro de validación y ejecutar el plan de aceptación
-en el entorno de TI antes de autorizar el piloto o la operación.
+Los resultados y el alcance de las pruebas se registran en
+[Validación](docs/VALIDACION.md). TI debe ejecutar el plan de aceptación en su
+entorno antes de autorizar el piloto o la operación.
 
 ## Código y datos
 
@@ -106,7 +113,7 @@ en el entorno de TI antes de autorizar el piloto o la operación.
 | `config/` | Ejemplo de planificación Microsoft, sin secretos |
 | `docs/` | Operación, despliegue, validación y propuestas |
 
-El inventario inicial se entrega como archivo de la **Release privada**, separado
+El inventario inicial se entrega por el canal interno de Samtec, separado
 del código y del ejecutable. La extracción del 20 de octubre de 2026 contiene
 **118 bloques y 1.416 casilleros**, con posiciones, rotación y números de cuatro
 dígitos. No incluye empleados, cuentas, asignaciones ni evidencias. Se acompaña
@@ -119,8 +126,9 @@ cuatro dígitos para todas las numeraciones que se creen después de esta carga.
 
 ## Acceso y evolución
 
-El repositorio debe publicarse **privado**, con acceso explícito para los revisores.
-Un enlace no sustituye la invitación a GitHub. La cuenta administradora inicial
+El repositorio actual es público. TI debe definir su visibilidad y titularidad
+para la entrega corporativa. Si pasa a privado, los revisores necesitarán acceso
+explícito. La cuenta administradora inicial
 de SLMS debe quedar bajo custodia definida por TI; es distinta del propietario
 del repositorio y de la cuenta de Windows que ejecuta el servicio.
 
